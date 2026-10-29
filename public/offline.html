@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sem conexão</title>
+<style>
+  :root{color-scheme:light dark;--bg:#FAF8F5;--fg:#1d2522;--muted:#5f6b66;--primary:#2F6B5A}
+  @media (prefers-color-scheme:dark){:root{--bg:#0F1513;--fg:#e8ece9;--muted:#9aa5a0;--primary:#5DB08F}}
+  body{margin:0;min-height:100vh;display:grid;place-items:center;background:var(--bg);color:var(--fg);font:16px/1.5 system-ui,sans-serif;padding:16px}
+  main{max-width:420px;text-align:center}
+  h1{font-family:Georgia,serif;font-weight:500}
+  p{color:var(--muted)}
+  button{margin-top:16px;background:var(--primary);color:#fff;border:0;border-radius:10px;padding:10px 18px;font-size:15px;cursor:pointer}
+</style>
+</head>
+<body><main>
+  <h1>Você está sem conexão</h1>
+  <p>Por segurança, dados de alunos e prontuários não ficam salvos no dispositivo. Verifique sua internet e tente novamente.</p>
+  <button onclick="location.reload()">Tentar novamente</button>
+</main></body>
+</html>

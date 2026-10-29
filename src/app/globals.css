@@ -1,0 +1,92 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Paleta: neutros quentes + verde-sálvia (saúde, calma) com acento areia */
+@layer base {
+  :root {
+    --background: 36 33% 98%;
+    --foreground: 160 14% 12%;
+    --card: 0 0% 100%;
+    --card-foreground: 160 14% 12%;
+    --muted: 36 20% 95%;
+    --muted-foreground: 160 6% 40%;
+    --border: 36 14% 89%;
+    --input: 36 12% 84%;
+    --primary: 158 27% 34%;
+    --primary-foreground: 0 0% 100%;
+    --primary-soft: 152 24% 93%;
+    --secondary: 36 22% 93%;
+    --secondary-foreground: 160 14% 16%;
+    --accent: 30 38% 90%;
+    --accent-foreground: 25 30% 25%;
+    --destructive: 2 64% 48%;
+    --destructive-foreground: 0 0% 100%;
+    --destructive-soft: 4 80% 96%;
+    --success: 152 52% 32%;
+    --success-soft: 145 45% 94%;
+    --warning: 33 86% 40%;
+    --warning-soft: 42 90% 94%;
+    --info: 208 60% 42%;
+    --info-soft: 208 70% 95%;
+    --ring: 158 27% 34%;
+    --sidebar: 0 0% 100%;
+    --sidebar-foreground: 160 10% 26%;
+    --sidebar-active: 152 24% 93%;
+    --radius: 0.75rem;
+  }
+  .dark {
+    --background: 160 12% 7%;
+    --foreground: 40 15% 94%;
+    --card: 160 10% 10%;
+    --card-foreground: 40 15% 94%;
+    --muted: 160 8% 14%;
+    --muted-foreground: 40 6% 64%;
+    --border: 160 7% 19%;
+    --input: 160 7% 24%;
+    --primary: 152 32% 52%;
+    --primary-foreground: 160 20% 8%;
+    --primary-soft: 155 20% 16%;
+    --secondary: 160 8% 16%;
+    --secondary-foreground: 40 15% 92%;
+    --accent: 30 14% 20%;
+    --accent-foreground: 36 30% 88%;
+    --destructive: 2 70% 58%;
+    --destructive-foreground: 0 0% 100%;
+    --destructive-soft: 2 40% 15%;
+    --success: 150 45% 50%;
+    --success-soft: 150 30% 14%;
+    --warning: 38 85% 56%;
+    --warning-soft: 38 40% 14%;
+    --info: 208 70% 62%;
+    --info-soft: 208 35% 15%;
+    --ring: 152 32% 52%;
+    --sidebar: 160 10% 9%;
+    --sidebar-foreground: 40 10% 82%;
+    --sidebar-active: 155 18% 15%;
+  }
+  * { @apply border-border; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { @apply bg-background text-foreground antialiased; font-feature-settings: 'cv11', 'ss01'; }
+  h1, h2, h3 { @apply tracking-tight; }
+  :focus-visible { @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background; }
+  ::selection { background: hsl(var(--primary) / 0.18); }
+  dialog::backdrop { background: rgb(10 18 14 / 0.45); backdrop-filter: blur(2px); }
+  input[type='number']::-webkit-inner-spin-button { opacity: 0.5; }
+}
+
+@layer components {
+  .page-title { @apply text-2xl font-semibold tracking-tight md:text-[1.7rem]; }
+  .muted { @apply text-sm text-muted-foreground; }
+  .skeleton { @apply relative overflow-hidden rounded-md bg-muted; }
+  .skeleton::after { content: ''; @apply absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/40 to-transparent dark:via-white/5; animation: shimmer 1.4s infinite; }
+  .prose-pf p { @apply mb-4 leading-relaxed; }
+  .prose-pf h2 { @apply mb-3 mt-8 text-xl font-semibold; }
+  .prose-pf ul { @apply mb-4 list-disc pl-5; }
+  .scrollbar-thin { scrollbar-width: thin; }
+}
+
+@media print {
+  .no-print { display: none !important; }
+  body { background: white; }
+}

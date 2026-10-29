@@ -1,0 +1,16 @@
+export const SETTINGS_SECTIONS = [
+  { href: '/app/configuracoes/clinica', label: 'Dados da clínica', desc: 'Nome, CNPJ, contatos, logo e identidade visual.', perm: 'settings.view', icon: 'Building2' },
+  { href: '/app/configuracoes/unidades', label: 'Unidades e feriados', desc: 'Unidades, horários de funcionamento, feriados e bloqueios.', perm: 'settings.view', icon: 'MapPin' },
+  { href: '/app/configuracoes/salas', label: 'Salas', desc: 'Salas e capacidade simultânea.', perm: 'settings.view', icon: 'DoorOpen' },
+  { href: '/app/configuracoes/modalidades', label: 'Modalidades', desc: 'Tipos de atendimento, duração, vagas e valores.', perm: 'settings.view', icon: 'Layers' },
+  { href: '/app/configuracoes/regras', label: 'Regras e automações', desc: 'Reposição, cancelamento, agendamento online, lembretes e retenção.', perm: 'settings.view', icon: 'SlidersHorizontal' },
+  { href: '/app/configuracoes/modelos', label: 'Modelos', desc: 'Contratos, documentos, mensagens, anamneses, evoluções e avaliações.', perm: 'settings.view', icon: 'FileText' },
+  { href: '/app/configuracoes/usuarios', label: 'Usuários', desc: 'Convide a equipe e defina unidades de acesso.', perm: 'users.view', icon: 'Users' },
+  { href: '/app/configuracoes/perfis', label: 'Perfis e permissões', desc: 'Matriz de permissões por perfil, inclusive personalizados.', perm: 'users.view', icon: 'ShieldCheck' },
+  { href: '/app/configuracoes/integracoes', label: 'Integrações', desc: 'WhatsApp, e-mail, pagamentos, Google Agenda, NFS-e.', perm: 'settings.view', icon: 'Plug' },
+  { href: '/app/configuracoes/site', label: 'Site público', desc: 'Textos, imagens, FAQ, blog e depoimentos.', perm: 'website.view', icon: 'Globe' },
+  { href: '/app/configuracoes/lgpd', label: 'LGPD e privacidade', desc: 'Políticas versionadas, consentimentos e solicitações de titulares.', perm: 'lgpd.view', icon: 'Lock' },
+  { href: '/app/configuracoes/auditoria', label: 'Auditoria', desc: 'Histórico imutável de ações sensíveis.', perm: 'audit.view', icon: 'History' },
+  { href: '/app/configuracoes/backup', label: 'Backup', desc: 'Política, histórico de execuções e restauração.', perm: 'settings.view', icon: 'DatabaseBackup' },
+  { href: '/app/configuracoes/conta', label: 'Minha conta', desc: 'Seus dados, senha e sessões.', perm: null, icon: 'UserCog' },
+] as const;

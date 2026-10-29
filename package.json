@@ -1,0 +1,60 @@
+{
+  "name": "pilatesflow",
+  "version": "1.0.0",
+  "private": true,
+  "description": "PilatesFlow — sistema de gestão para clínicas e studios de Pilates",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "seed": "tsx scripts/seed.ts",
+    "db:test": "bash scripts/test-db.sh",
+    "backup": "tsx scripts/backup.ts",
+    "icons": "node scripts/generate-icons.mjs"
+  },
+  "dependencies": {
+    "@date-fns/tz": "^1.2.0",
+    "@supabase/ssr": "^0.6.1",
+    "@supabase/supabase-js": "^2.49.4",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "date-fns": "^4.1.0",
+    "exceljs": "^4.4.0",
+    "lucide-react": "^0.487.0",
+    "next": "^15.3.0",
+    "next-themes": "^0.4.6",
+    "papaparse": "^5.5.2",
+    "pdf-lib": "^1.17.1",
+    "qrcode": "^1.5.4",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "recharts": "^2.15.2",
+    "server-only": "^0.0.1",
+    "sonner": "^2.0.3",
+    "tailwind-merge": "^2.6.0",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.14.0",
+    "@types/papaparse": "^5.3.15",
+    "@types/qrcode": "^1.5.5",
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
+    "autoprefixer": "^10.4.21",
+    "dotenv": "^16.4.7",
+    "eslint": "^8.57.1",
+    "eslint-config-next": "^15.3.0",
+    "postcss": "^8.5.3",
+    "sharp": "^0.34.1",
+    "tailwindcss": "^3.4.17",
+    "tsx": "^4.19.3",
+    "typescript": "^5.8.3",
+    "vitest": "^3.1.1"
+  },
+  "engines": {
+    "node": ">=20.9.0"
+  }
+}

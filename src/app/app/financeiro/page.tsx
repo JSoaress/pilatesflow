@@ -1,7 +1,8 @@
 import { TrendingUp, TrendingDown, Scale, HandCoins, Receipt, AlertTriangle, Target, Wallet } from 'lucide-react';
 import { requirePermission } from '@/lib/auth/context';
 import { PageHeader, StatCard, ErrorState } from '@/components/ui/misc';
-import { PeriodFilter, resolvePeriod } from '@/components/app/period-filter';
+import { PeriodFilter } from '@/components/app/period-filter';
+import { resolvePeriod } from '@/components/app/period';
 import { ComboCard, BarCard } from '@/components/charts/charts';
 import { money, percent, todayISO } from '@/lib/format';
 import { paymentMethod } from '@/lib/labels';

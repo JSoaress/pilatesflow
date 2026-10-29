@@ -8,7 +8,12 @@ const securityHeaders = [
   { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
   { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
   { key: 'Permissions-Policy', value: 'camera=(self), microphone=(), geolocation=()' },
-  { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
+  // Só em produção: navegadores ignoram HSTS recebido por transporte inseguro
+  // (http://localhost no dev), mas em produção, com hostname real, travaria
+  // domínio e subdomínios por 2 anos mesmo que um deploy futuro precise de HTTP.
+  ...(process.env.NODE_ENV === 'production'
+    ? [{ key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' }]
+    : []),
 ];
 
 const nextConfig = {

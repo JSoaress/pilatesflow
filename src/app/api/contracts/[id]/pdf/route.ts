@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { SimplePdf, pdfResponse } from '@/lib/pdf/simple';
 import { dateTime } from '@/lib/format';
 import { env } from '@/lib/env';
+import { storagePublicUrl } from '@/lib/utils';
 
 /** PDF do contrato (versão imutável), com registro de aceite e hash do conteúdo. */
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -12,6 +13,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
   if (!auth.user) return NextResponse.redirect(new URL('/login', env.siteUrl));
   let c: any = (await supabase.from('contracts').select('id, number, title, content, content_hash, status, accepted_at, accepted_by_name, accepted_ip, created_at, organization_id').eq('id', id).maybeSingle()).data;
   let tz = 'America/Sao_Paulo';
+  let logoUrl: string | null = null;
   if (!c) {
     // portal do aluno
     const { data: me } = await supabase.rpc('portal_me');
@@ -21,12 +23,14 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
       if (found) { c = { ...found, number: '' }; break; }
     }
   } else {
-    const { data: o } = await supabase.from('organizations').select('timezone').eq('id', c.organization_id).single();
+    const { data: o } = await supabase.from('organizations').select('timezone, logo_path').eq('id', c.organization_id).single();
     tz = o?.timezone ?? tz;
+    logoUrl = storagePublicUrl(env.supabaseUrl, 'site', o?.logo_path);
     await supabase.rpc('log_audit_event', { p_org: c.organization_id, p_action: 'download', p_entity: 'contracts', p_entity_id: id, p_context: { format: 'pdf' } });
   }
   if (!c) return new NextResponse('Contrato não encontrado ou acesso negado.', { status: 404 });
   const pdf = await SimplePdf.create(c.title);
+  await pdf.logo(logoUrl);
   pdf.text(c.title, { size: 14, bold: true, gap: 8 });
   pdf.paragraph(c.content);
   pdf.line(12);

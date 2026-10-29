@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { MessageCircle, Instagram, Phone, Mail, MapPin } from 'lucide-react';
 import { getSite, siteImage } from '@/lib/site';
-import { whatsappLink } from '@/lib/utils';
+import { whatsappLink, brandColorStyle } from '@/lib/utils';
 import { SiteNav } from '@/components/site/site-nav';
 import { Logo } from '@/components/layout/sidebar';
 
@@ -13,8 +13,10 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
   const wa = whatsappLink(o?.whatsapp ?? site?.units?.[0]?.whatsapp, 'Olá! Gostaria de informações sobre as aulas.');
   const logo = siteImage(o?.logo_path);
   const unit = site?.units?.[0];
+  const brandCss = brandColorStyle(o?.primary_color);
   return (
     <div className="flex min-h-screen flex-col bg-background">
+      {brandCss && <style>{brandCss}</style>}
       <a href="#conteudo" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-card focus:px-4 focus:py-2">Pular para o conteúdo</a>
       <header className="sticky top-0 z-30 border-b bg-background/90 backdrop-blur">
         <div className="container flex h-16 items-center justify-between gap-4">

@@ -76,6 +76,33 @@ export class SimplePdf {
     this.y -= 20;
   }
 
+  /**
+   * Baixa e desenha a logo da clínica no canto superior direito da página atual (letterhead),
+   * mantendo a proporção. Só PNG e JPEG são suportados pelo pdf-lib; SVG/WEBP e qualquer falha
+   * de rede são ignorados silenciosamente, para nunca quebrar a geração do PDF por causa da logo.
+   */
+  async logo(url: string | null | undefined, { maxW = 110, maxH = 42 }: { maxW?: number; maxH?: number } = {}) {
+    if (!url) return;
+    try {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 5000);
+      const res = await fetch(url, { signal: controller.signal });
+      clearTimeout(timer);
+      if (!res.ok) return;
+      const type = res.headers.get('content-type') ?? '';
+      const bytes = new Uint8Array(await res.arrayBuffer());
+      let img;
+      if (type.includes('png')) img = await this.doc.embedPng(bytes);
+      else if (type.includes('jpeg') || type.includes('jpg')) img = await this.doc.embedJpg(bytes);
+      else return;
+      const scale = Math.min(maxW / img.width, maxH / img.height, 1);
+      const w = img.width * scale, h = img.height * scale;
+      this.page.drawImage(img, { x: this.width - this.margin - w, y: this.height - this.margin - h, width: w, height: h });
+    } catch {
+      // rede indisponível ou imagem corrompida: segue sem logo
+    }
+  }
+
   footer(text: string) {
     const pages = this.doc.getPages();
     pages.forEach((pg, i) => {

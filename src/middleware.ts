@@ -3,7 +3,7 @@ import { updateSession } from '@/lib/supabase/middleware';
 import { env } from '@/lib/env';
 
 const PROTECTED = ['/app', '/portal', '/onboarding'];
-const AUTH_PAGES = ['/login', '/cadastro'];
+const AUTH_PAGES = ['/login', '/cadastro', '/recuperar-senha'];
 
 export async function middleware(request: NextRequest) {
   const { pathname, search } = request.nextUrl;

@@ -7,15 +7,18 @@ import { Badge } from '@/components/ui/badge';
 import { date, dateTime, number } from '@/lib/format';
 import { label, assessmentType } from '@/lib/labels';
 import { AnamnesisActions, NewAnamnesisButton } from '@/components/app/clinical/anamnesis-actions';
+import { NewFichaButton, FichaActions } from '@/components/app/clinical/ficha-actions';
 import { EvolutionChart } from '@/components/app/clinical/evolution-chart';
 
 export async function AssessmentsTab({ patientId }: { patientId: string }) {
   const ctx = await getAppContext();
-  const [assess, anam, templates, fields] = await Promise.all([
+  const [assess, anam, templates, fields, fichas, fichaTemplates] = await Promise.all([
     ctx.supabase.from('assessments').select('id, type, assessed_on, weight_kg, height_cm, bmi, pain_scale, status, data, staff(full_name), next_assessment_on').eq('patient_id', patientId).order('assessed_on', { ascending: false }),
     ctx.supabase.from('anamnesis').select('id, status, created_at, completed_at, filled_by, public_token, token_expires_at, signature_name, questions_snapshot, answers').eq('patient_id', patientId).order('created_at', { ascending: false }),
     ctx.supabase.from('anamnesis_templates').select('id, name').eq('organization_id', ctx.org.id).eq('is_active', true),
     ctx.supabase.from('assessment_fields').select('key, label, unit').eq('organization_id', ctx.org.id).eq('is_active', true).order('sort_order'),
+    ctx.supabase.from('fichas').select('id, status, created_at, finalized_at, signature_name, questions_snapshot, answers, ficha_templates(name), staff(full_name)').eq('patient_id', patientId).order('created_at', { ascending: false }),
+    ctx.supabase.from('ficha_templates').select('id, name').eq('organization_id', ctx.org.id).eq('is_active', true),
   ]);
   const list = (assess.data ?? []) as any[];
   const series = [...list].reverse().map((a) => ({ date: date(a.assessed_on), peso: a.weight_kg, imc: a.bmi, dor: a.pain_scale, ...(a.data ?? {}) }));
@@ -68,6 +71,24 @@ export async function AssessmentsTab({ patientId }: { patientId: string }) {
                 </div>
                 <AnamnesisActions anamnesis={{ id: a.id, status: a.status, link: a.public_token ? `${siteUrl}/anamnese/${a.public_token}` : null, questions: a.questions_snapshot, answers: a.answers }} patientId={patientId}
                   canEdit={ctx.can('assessments.edit')} canSend={ctx.can('communication.create')} />
+              </li>
+            ))}
+          </ul>
+        )}
+      </Section>
+
+      <Section title="Fichas de avaliação" actions={ctx.can('assessments.create') ? <NewFichaButton patientId={patientId} templates={(fichaTemplates.data ?? []) as any[]} /> : undefined}>
+        {(fichas.data ?? []).length === 0 ? <p className="text-sm text-muted-foreground">Nenhuma ficha registrada.</p> : (
+          <ul className="divide-y">
+            {((fichas.data ?? []) as any[]).map((f) => (
+              <li key={f.id} className="flex flex-wrap items-center justify-between gap-2 py-3">
+                <div>
+                  <p className="font-medium">{f.ficha_templates?.name ?? 'Ficha'} · {dateTime(f.created_at, ctx.tz)}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {f.status === 'finalized' ? <>Finalizada em {dateTime(f.finalized_at, ctx.tz)}{f.staff?.full_name && ` · ${f.staff.full_name}`}{f.signature_name && ` · assinatura: ${f.signature_name}`}</> : <Badge variant="warning">Rascunho</Badge>}
+                  </p>
+                </div>
+                <FichaActions ficha={{ id: f.id, status: f.status, questions: f.questions_snapshot, answers: f.answers }} patientId={patientId} canEdit={ctx.can('assessments.edit')} />
               </li>
             ))}
           </ul>

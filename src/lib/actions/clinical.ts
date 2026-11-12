@@ -156,6 +156,28 @@ export async function sendAnamnesisLink(anamnesisId: string, patientId: string, 
   });
 }
 
+// ---------------------------------------------------------------- Fichas de avaliação
+export type FichaQuestion = { id: string; section?: string | null; label: string; help_text?: string | null; type: string; options?: string[]; scale_min?: number | null; scale_max?: number | null; required?: boolean };
+
+/** Cria a ficha (snapshot das perguntas ativas do modelo) e devolve as perguntas para preenchimento imediato. */
+export async function createFicha(patientId: string, templateId: string) {
+  return runAction({ permission: 'assessments.create' }, async (ctx) => {
+    const id = must(await ctx.supabase.rpc('create_ficha', { p_patient_id: patientId, p_template_id: templateId, p_staff_id: ctx.staffId, p_appointment_id: null })) as string;
+    const { data } = await ctx.supabase.from('fichas').select('questions_snapshot').eq('id', id).single();
+    revalidatePath(`/app/alunos/${patientId}`);
+    return { id, questions: (data?.questions_snapshot ?? []) as FichaQuestion[] };
+  });
+}
+
+/** Salva as respostas e finaliza a ficha (torna imutável). Preenchimento é sempre feito pela equipe, em um único passo. */
+export async function submitFicha(id: string, patientId: string, answers: Record<string, unknown>, signature: string) {
+  return runAction({ permission: 'assessments.edit' }, async (ctx) => {
+    must(await ctx.supabase.from('fichas').update({ answers, signature_name: signature || null }).eq('id', id).eq('organization_id', ctx.org.id).eq('status', 'draft'));
+    must(await ctx.supabase.rpc('finalize_ficha', { p_id: id }));
+    revalidatePath(`/app/alunos/${patientId}`);
+  });
+}
+
 // ---------------------------------------------------------------- Anexos
 export async function uploadAttachment(patientId: string, fd: FormData) {
   return runAction({ permission: ['documents.create', 'medical_records.create'] }, async (ctx) => {

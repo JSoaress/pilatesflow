@@ -15,6 +15,7 @@ export default async function ModelosPage({ searchParams }: { searchParams: Prom
     { id: 'documentos', label: 'Documentos', hidden: !ctx.can('documents.view') },
     { id: 'mensagens', label: 'Mensagens', hidden: !ctx.can('communication.view') },
     { id: 'anamneses', label: 'Anamneses', hidden: !ctx.can('assessments.view') },
+    { id: 'fichas', label: 'Fichas de avaliação', hidden: !ctx.can('assessments.view') },
     { id: 'avaliacao', label: 'Avaliação física', hidden: !ctx.can('assessments.view') },
     { id: 'evolucao', label: 'Evolução', hidden: !ctx.can('medical_records.view') },
   ];
@@ -30,12 +31,13 @@ export default async function ModelosPage({ searchParams }: { searchParams: Prom
 
   return (
     <>
-      <PageHeader title="Modelos" description="Contratos, documentos, mensagens, anamneses, evoluções e avaliações." />
+      <PageHeader title="Modelos" description="Contratos, documentos, mensagens, anamneses, fichas de avaliação, evoluções e avaliações." />
       <TabLinks tabs={tabs} active={active} base={base} />
       {active === 'contratos' && <ResourceSection resource="contract_templates" searchParams={sp} />}
       {active === 'documentos' && <ResourceSection resource="document_templates" searchParams={sp} />}
       {active === 'mensagens' && <ResourceSection resource="message_templates" searchParams={sp} />}
       {active === 'anamneses' && <ResourceSection resource="anamnesis_templates" searchParams={sp} onRowClick="/app/configuracoes/modelos/anamnese/{id}" />}
+      {active === 'fichas' && <ResourceSection resource="ficha_templates" searchParams={sp} onRowClick="/app/configuracoes/modelos/ficha/{id}" />}
       {active === 'avaliacao' && <ResourceSection resource="assessment_fields" searchParams={sp} />}
       {active === 'evolucao' && <EvolutionTemplatesManager rows={evolutionRows} canEdit={ctx.can('medical_records.edit')} />}
     </>

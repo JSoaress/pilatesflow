@@ -1,7 +1,7 @@
 'use server';
 import { cookies } from 'next/headers';
 import { revalidatePath } from 'next/cache';
-import { getAppContext, ORG_COOKIE, UNIT_COOKIE } from '@/lib/auth/context';
+import { ORG_COOKIE, UNIT_COOKIE } from '@/lib/auth/context';
 import { runAction, must } from './safe-action';
 
 const cookieOpts = { httpOnly: true, sameSite: 'lax' as const, secure: process.env.NODE_ENV === 'production', path: '/', maxAge: 60 * 60 * 24 * 365 };
@@ -51,9 +51,4 @@ export async function markNotificationsRead(ids?: string[]) {
   return runAction({}, async (ctx) => {
     must(await ctx.supabase.rpc('mark_notifications_read', { p_ids: ids ?? null }));
   });
-}
-
-export async function getShellData() {
-  const ctx = await getAppContext();
-  return ctx;
 }

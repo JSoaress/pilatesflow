@@ -45,23 +45,27 @@ export async function uploadExamReport(patientId: string, fd: FormData) {
 
     const baseTitle = d.title || `${examKindLabel(d.exam_kind)}${d.exam_date ? ` — ${d.exam_date.split('-').reverse().join('/')}` : ''}`;
     const uploaded: string[] = [];
+    const insertedIds: string[] = [];
     try {
       for (const [i, f] of files.entries()) {
         const path = `${ctx.org.id}/patients/${patientId}/laudos/${d.exam_area}/${safeFileName(f.name)}`;
         must(await ctx.supabase.storage.from('clinical').upload(path, f, { contentType: f.type }));
         uploaded.push(path);
-        must(await ctx.supabase.from('attachments').insert({
+        const ins = must(await ctx.supabase.from('attachments').insert({
           organization_id: ctx.org.id, unit_id: ctx.unitId, patient_id: patientId, category: d.category, is_clinical: true,
           title: files.length > 1 ? `${baseTitle} (${i + 1}/${files.length})` : baseTitle,
           description: files.length > 1 ? f.name : null,
           bucket: 'clinical', storage_path: path, mime_type: f.type, size_bytes: f.size,
           exam_area: d.exam_area, exam_kind: d.exam_kind, exam_date: d.exam_date, issuer: d.issuer, findings: d.findings, assessment_id: d.assessment_id,
-        }));
+        }).select('id').single()) as { id: string };
+        insertedIds.push(ins.id);
       }
     } catch (e) {
-      // não deixa arquivo órfão no armazenamento se o registro falhou
-      const last = uploaded.at(-1);
-      if (last) await ctx.supabase.storage.from('clinical').remove([last]).catch(() => undefined);
+      // operação tudo-ou-nada: desfaz as linhas já inseridas e remove os arquivos enviados nesta chamada
+      try {
+        if (insertedIds.length) await ctx.supabase.from('attachments').delete().in('id', insertedIds).eq('organization_id', ctx.org.id);
+        if (uploaded.length) await ctx.supabase.storage.from('clinical').remove(uploaded);
+      } catch { /* rollback best-effort */ }
       throw e;
     }
     revalidatePath(`/app/alunos/${patientId}`);

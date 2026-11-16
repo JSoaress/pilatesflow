@@ -8,11 +8,16 @@ const securityHeaders = [
   { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
   { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
   { key: 'Permissions-Policy', value: 'camera=(self), microphone=(), geolocation=()' },
-  { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
+  // Só em produção: em produção com domínio real, HSTS travaria HTTP por 2 anos.
+  ...(process.env.NODE_ENV === 'production'
+    ? [{ key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' }]
+    : []),
 ];
 
 const nextConfig = {
   poweredByHeader: false,
+  // Build para contêiner (Docker): NEXT_OUTPUT=standalone gera .next/standalone com um servidor Node enxuto.
+  output: process.env.NEXT_OUTPUT === 'standalone' ? 'standalone' : undefined,
   // O build checa os tipos (TypeScript). O lint de estilo roda à parte com `npm run lint` e não bloqueia o build.
   eslint: { ignoreDuringBuilds: true },
   // bibliotecas de servidor que não devem ser empacotadas (evita aviso do Turbopack sobre fstream/rimraf)

@@ -1,0 +1,6 @@
+# Scripts que rodam dentro do Docker (Linux) precisam de quebra de linha LF
+*.sh text eol=lf
+*.template text eol=lf
+Dockerfile* text eol=lf
+Makefile text eol=lf
+docker-compose*.yml text eol=lf

@@ -14,3 +14,4 @@ supabase/.temp
 !.env.example
 *.tgz
 *.tar.gz
+!.env.docker.example

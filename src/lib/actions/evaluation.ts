@@ -92,7 +92,7 @@ const templateSchema = z.object({
 });
 
 export async function saveEvaluationTemplate(id: string | null, input: z.input<typeof templateSchema>) {
-  return runAction({ permission: ['settings.edit', 'assessments.edit'], schema: templateSchema, input }, async (ctx, d) => {
+  return runAction({ permission: 'settings.edit', schema: templateSchema, input }, async (ctx, d) => {
     const ids = d.sections.flatMap((s) => s.fields.map((f) => f.id));
     const dup = ids.find((x, i) => ids.indexOf(x) !== i);
     if (dup) throw new UserError(`Há duas perguntas com o mesmo identificador (${dup}).`);
@@ -110,7 +110,7 @@ export async function saveEvaluationTemplate(id: string | null, input: z.input<t
 }
 
 export async function setEvaluationTemplateActive(id: string, active: boolean) {
-  return runAction({ permission: ['settings.edit', 'assessments.edit'] }, async (ctx) => {
+  return runAction({ permission: 'settings.edit' }, async (ctx) => {
     must(await ctx.supabase.from('evaluation_templates').update({ is_active: active }).eq('id', id).eq('organization_id', ctx.org.id));
     revalidatePath('/app/configuracoes/modelos');
   });

@@ -26,7 +26,7 @@ export default async function TemplatesPage({ searchParams }: { searchParams: Pr
   const tab = tabs.find((t) => t.id === asked && !t.hidden)?.id ?? firstVisible;
 
   let body: React.ReactNode = null;
-  if (tab === 'fichas') body = <EvaluationTemplatesList items={await listTemplates(ctx, true)} canEdit={ctx.can('settings.edit') && ctx.can('assessments.edit')} />;
+  if (tab === 'fichas') body = <EvaluationTemplatesList items={await listTemplates(ctx, true)} canEdit={ctx.can('settings.edit')} />;
   if (tab === 'documentos') body = <ResourceSection resource="document_templates" searchParams={sp} />;
   if (tab === 'contratos') body = <ResourceSection resource="contract_templates" searchParams={sp} />;
   if (tab === 'mensagens') body = <ResourceSection resource="message_templates" searchParams={sp} />;

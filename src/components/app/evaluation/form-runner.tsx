@@ -40,17 +40,28 @@ export function FormRunner({ template, patient, staff, initial, defaultStaffId, 
 
   const set = React.useCallback((k: string, v: unknown) => { setA((s) => ({ ...s, [k]: v })); setDirty(true); }, []);
 
-  const save = React.useCallback(async (finalize = false, silent = false) => {
-    setSaving('saving');
-    const r = await saveEvaluationForm(id, { patient_id: patient.id, form_key: template.key, answers: a, ...meta, finalize });
-    if (!r.ok) { setSaving('error'); if (!silent) toast.error(r.error); return false; }
-    const newId = (r.data as { id: string }).id;
-    setDirty(false); setSaving('saved');
-    if (finalize) { toast.success('Avaliação finalizada e assinada.'); router.push(`/app/avaliacoes/${newId}`); return true; }
-    if (!id) { setId(newId); window.history.replaceState(null, '', `/app/avaliacoes/${newId}`); }
-    if (!silent) toast.success('Rascunho salvo.');
-    return true;
-  }, [id, patient.id, template.key, a, meta, router]);
+  // id e trava de concorrência via ref: garante um salvamento por vez e sempre com o id já
+  // definido pelo anterior — evita criar dois rascunhos quando o autosave dispara em paralelo.
+  const idRef = React.useRef<string | null>(initial?.id ?? null);
+  const lock = React.useRef<Promise<boolean>>(Promise.resolve(true));
+
+  const save = React.useCallback((finalize = false, silent = false): Promise<boolean> => {
+    const run = async (): Promise<boolean> => {
+      setSaving('saving');
+      const r = await saveEvaluationForm(idRef.current, { patient_id: patient.id, form_key: template.key, answers: a, ...meta, finalize });
+      if (!r.ok) { setSaving('error'); if (!silent) toast.error(r.error); return false; }
+      const newId = (r.data as { id: string }).id;
+      setDirty(false); setSaving('saved');
+      if (finalize) { toast.success('Avaliação finalizada e assinada.'); router.push(`/app/avaliacoes/${newId}`); return true; }
+      if (!idRef.current) { idRef.current = newId; setId(newId); window.history.replaceState(null, '', `/app/avaliacoes/${newId}`); }
+      if (!silent) toast.success('Rascunho salvo.');
+      return true;
+    };
+    // encadeia no salvamento anterior: nunca roda dois ao mesmo tempo
+    const p = lock.current.then(run, run);
+    lock.current = p.catch(() => false);
+    return p;
+  }, [patient.id, template.key, a, meta, router]);
 
   // salvamento automático (rascunho) 4 s após a última alteração
   React.useEffect(() => {

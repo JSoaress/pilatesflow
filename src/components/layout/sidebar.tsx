@@ -29,11 +29,11 @@ function NavLinks({ items, onNavigate }: { items: NavItem[]; onNavigate?: () => 
   );
 }
 
-export function Sidebar({ items, appName, orgName }: { items: NavItem[]; appName: string; orgName: string }) {
+export function Sidebar({ items, appName, orgName, logoUrl }: { items: NavItem[]; appName: string; orgName: string; logoUrl?: string | null }) {
   return (
     <aside className="no-print fixed inset-y-0 left-0 z-30 hidden w-64 flex-col border-r bg-sidebar lg:flex">
       <div className="flex h-16 items-center gap-2.5 border-b px-5">
-        <Logo />
+        <Logo src={logoUrl} alt={appName} />
         <div className="min-w-0">
           <p className="truncate font-display text-lg leading-tight">{appName}</p>
           <p className="truncate text-xs text-muted-foreground">{orgName}</p>
@@ -45,7 +45,7 @@ export function Sidebar({ items, appName, orgName }: { items: NavItem[]; appName
   );
 }
 
-export function MobileNav({ items, appName, open, onClose }: { items: NavItem[]; appName: string; open: boolean; onClose: () => void }) {
+export function MobileNav({ items, appName, open, onClose, logoUrl }: { items: NavItem[]; appName: string; open: boolean; onClose: () => void; logoUrl?: string | null }) {
   React.useEffect(() => {
     document.body.style.overflow = open ? 'hidden' : '';
     return () => { document.body.style.overflow = ''; };
@@ -56,7 +56,7 @@ export function MobileNav({ items, appName, open, onClose }: { items: NavItem[];
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
       <div className="absolute inset-y-0 left-0 flex w-72 max-w-[85vw] animate-fade-in flex-col bg-sidebar shadow-lift">
         <div className="flex h-16 items-center justify-between border-b px-5">
-          <span className="flex items-center gap-2 font-display text-lg"><Logo />{appName}</span>
+          <span className="flex items-center gap-2 font-display text-lg"><Logo src={logoUrl} alt={appName} />{appName}</span>
           <button onClick={onClose} className="rounded-md p-2 hover:bg-muted" aria-label="Fechar menu"><X className="h-5 w-5" /></button>
         </div>
         <NavLinks items={items} onNavigate={onClose} />
@@ -66,7 +66,11 @@ export function MobileNav({ items, appName, open, onClose }: { items: NavItem[];
   );
 }
 
-export function Logo({ className }: { className?: string }) {
+export function Logo({ className, src, alt }: { className?: string; src?: string | null; alt?: string }) {
+  if (src) {
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img src={src} alt={alt ?? ''} className={cn('h-8 w-8 shrink-0 rounded-md object-contain', className)} />;
+  }
   return (
     <svg viewBox="0 0 32 32" className={cn('h-8 w-8 shrink-0', className)} aria-hidden>
       <rect width="32" height="32" rx="9" fill="hsl(var(--primary))" />

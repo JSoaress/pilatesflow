@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { updateSession } from '@/lib/supabase/middleware';
 
 const PROTECTED = ['/app', '/portal', '/onboarding', '/imprimir', '/licenca', '/plataforma'];
-const AUTH_PAGES = ['/login', '/cadastro'];
+const AUTH_PAGES = ['/login', '/cadastro', '/recuperar-senha'];
 
 export async function middleware(request: NextRequest) {
   const { pathname, search } = request.nextUrl;

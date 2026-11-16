@@ -11,7 +11,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
     }
   }, []);
   return (
-    <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+    <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
       <ConfirmProvider>{children}</ConfirmProvider>
       <Toaster richColors closeButton position="top-right" toastOptions={{ duration: 4500 }} />
     </ThemeProvider>

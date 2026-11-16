@@ -58,17 +58,3 @@ export function must<T>(res: { data: T; error: unknown }): T {
   if (res.error) throw res.error;
   return res.data;
 }
-
-/** Converte FormData em objeto simples (campos múltiplos viram array). */
-export function formToObject(fd: FormData) {
-  const obj: Record<string, unknown> = {};
-  for (const [k, v] of fd.entries()) {
-    if (k.startsWith('$ACTION')) continue;
-    const val = typeof v === 'string' ? v : v;
-    if (k.endsWith('[]')) {
-      const key = k.slice(0, -2);
-      (obj[key] as unknown[] | undefined)?.push(val) ?? (obj[key] = [val]);
-    } else obj[k] = val;
-  }
-  return obj;
-}

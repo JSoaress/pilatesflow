@@ -56,13 +56,12 @@ const MEEM_REF = [{ max: 0, cut: 20 }, { max: 4, cut: 25 }, { max: 8, cut: 26.5 
 function named(name: string, a: Answers, s: Scores, ctx: EvalContext, args: Record<string, string> = {}): ScoreResult {
   const n = (id: string) => (s[id] ? toNum(s[id].value) : toNum(a[id]));
   switch (name) {
-    case 'mae': { // Massa apendicular estimada (Lee et al., 2000)
+    case 'mae': { // Massa apendicular estimada (Lee et al., 2000) — sem o ajuste por raça (dado sensível/LGPD)
       const w = n(args.weight), h = n(args.height), age = n(args.age) ?? ctx.age ?? null;
       const sexV = a[args.sex] ?? ctx.sex;
       const sex = sexV === 'm' || sexV === 'male' ? 1 : sexV === 'f' || sexV === 'female' ? 0 : null;
-      const raceCoef = ({ branca: 0, afro: 1.4, asiatica: -1.2, outra: 0 } as Record<string, number>)[String(a[args.race] ?? '')];
-      if (w === null || h === null || age === null || sex === null || raceCoef === undefined) return { value: null, text: 'Preencha peso, altura, idade, sexo e raça' };
-      const v = 0.244 * w + 7.8 * h + 6.6 * sex - 0.098 * age + raceCoef - 3.3;
+      if (w === null || h === null || age === null || sex === null) return { value: null, text: 'Preencha peso, altura, idade e sexo' };
+      const v = 0.244 * w + 7.8 * h + 6.6 * sex - 0.098 * age - 3.3;
       return { value: Math.round(v * 100) / 100, text: `${fmtNum(v, 2)} kg` };
     }
     case 'fibro_regions': {

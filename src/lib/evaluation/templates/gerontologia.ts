@@ -79,8 +79,7 @@ export const gerontologia: FormTemplate = {
       num('massa', 'Massa', 'kg', { step: 0.1, maps: 'weight_kg' }), num('altura', 'Altura', 'm', { step: 0.01, maps: 'height_m' }),
       calc('imc', 'IMC', { kind: 'bmi', weight: 'massa', height: 'altura' }, { unit: 'kg/m²', bands: BMI_BANDS_ELDERLY }),
       num('cintura', 'Circunferência da cintura', 'cm'), num('panturrilha', 'Circunferência da panturrilha', 'cm', { help: '< 31 cm sugere baixa massa muscular' }),
-      single('raca', 'Raça (para a fórmula da MAE)', opts(['branca', 'Branca'], ['afro', 'Preta / afrodescendente'], ['asiatica', 'Asiática'], ['outra', 'Outra'])),
-      calc('mae', 'Massa apendicular estimada (MAE)', { kind: 'named', name: 'mae', args: { weight: 'massa', height: 'altura', sex: 'sexo', age: 'idade', race: 'raca' } }, { help: 'MAE = 0,244×peso + 7,8×altura + 6,6×sexo − 0,098×idade + raça − 3,3' }),
+      calc('mae', 'Massa apendicular estimada (MAE)', { kind: 'named', name: 'mae', args: { weight: 'massa', height: 'altura', sex: 'sexo', age: 'idade' } }, { help: 'MAE = 0,244×peso + 7,8×altura + 6,6×sexo − 0,098×idade − 3,3' }),
     ] },
     { id: 'hipotensao', title: 'Teste de hipotensão postural', fields: [
       bp('pa_dd', 'PA decúbito dorsal'), bp('pa_sent', 'PA sentado'), bp('pa_orto', 'PA ortostatismo (imediato)'), bp('pa_orto3', 'PA ortostatismo 3 min'), bp('pa_orto5', 'PA ortostatismo 5 min'),

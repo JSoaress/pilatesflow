@@ -2,7 +2,7 @@ import { TrendingUp, TrendingDown, Scale, HandCoins, Receipt, AlertTriangle, Tar
 import { requirePermission } from '@/lib/auth/context';
 import { PageHeader, StatCard, ErrorState } from '@/components/ui/misc';
 import { PeriodFilter } from '@/components/app/period-filter';
-import { resolvePeriod } from '@/components/app/period';
+import { resolvePeriod } from '@/lib/period';
 import { ComboCard, BarCard } from '@/components/charts/charts';
 import { money, percent, todayISO } from '@/lib/format';
 import { paymentMethod } from '@/lib/labels';

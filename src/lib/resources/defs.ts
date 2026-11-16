@@ -324,7 +324,7 @@ export const RESOURCES: Record<string, ResourceDef> = {
       { name: 'section', label: 'Seção', type: 'select', required: true, list: true, options: [
         { value: 'circumferences', label: 'Circunferências' }, { value: 'rom', label: 'Amplitude de movimento' }, { value: 'flexibility', label: 'Flexibilidade' },
         { value: 'strength', label: 'Força' }, { value: 'mobility', label: 'Mobilidade' }, { value: 'balance', label: 'Equilíbrio' },
-        { value: 'coordination', label: 'Coordenação' }, { value: 'endurance', label: 'Resistência' }, { value: 'functional_tests', label: 'Testes funcionais' }, { value: 'other', label: 'Outros' }] },
+        { value: 'coordination', label: 'Coordenação' }, { value: 'endurance', label: 'Resistência' }, { value: 'functional_tests', label: 'Testes funcionais' }, { value: 'posture', label: 'Postura' }, { value: 'other', label: 'Outros' }] },
       { name: 'label', label: 'Nome do campo', type: 'text', required: true, list: true },
       { name: 'key', label: 'Chave interna', type: 'text', required: true, hint: 'Somente letras minúsculas, números e _ (ex.: cintura).', readOnlyOnEdit: true, list: true },
       { name: 'unit', label: 'Unidade', type: 'text', placeholder: 'cm, kg, °, s, reps', list: true },
@@ -486,39 +486,6 @@ export const RESOURCES: Record<string, ResourceDef> = {
       { name: 'template_id', label: 'Modelo', type: 'ref', ref: { table: 'anamnesis_templates', label: 'name' }, required: true, hideInForm: true },
       { name: 'sort_order', label: 'Ordem', type: 'int', default: 10, list: true },
       { name: 'section', label: 'Seção', type: 'text', list: true, placeholder: 'Histórico de saúde' },
-      { name: 'label', label: 'Pergunta', type: 'text', required: true, list: true, full: true },
-      { name: 'type', label: 'Tipo de resposta', type: 'select', required: true, default: 'text', list: true, options: [
-        { value: 'text', label: 'Texto curto' }, { value: 'textarea', label: 'Texto longo' }, { value: 'yes_no', label: 'Sim / Não' },
-        { value: 'number', label: 'Número' }, { value: 'date', label: 'Data' }, { value: 'select', label: 'Escolha única' },
-        { value: 'multi_select', label: 'Múltipla escolha' }, { value: 'scale', label: 'Escala' }, { value: 'signature', label: 'Assinatura (nome)' }] },
-      { name: 'options', label: 'Opções (escolha única/múltipla)', type: 'tags', full: true, hint: 'Separe por vírgula.' },
-      { name: 'scale_min', label: 'Escala mínima', type: 'int' },
-      { name: 'scale_max', label: 'Escala máxima', type: 'int' },
-      { name: 'help_text', label: 'Texto de ajuda', type: 'text', full: true },
-      { name: 'required', label: 'Obrigatória', type: 'boolean', default: false, list: true },
-      { name: 'is_active', label: 'Ativa', type: 'boolean', default: true },
-    ],
-  },
-  ficha_templates: {
-    key: 'ficha_templates', table: 'ficha_templates', title: 'Modelos de ficha', singular: 'Modelo de ficha',
-    description: 'Crie o modelo e depois clique nele para cadastrar as perguntas.',
-    perms: { view: 'assessments.view', create: 'settings.edit', edit: 'settings.edit', delete: 'settings.edit' },
-    orderBy: [{ column: 'name' }],
-    fields: [
-      { name: 'name', label: 'Nome', type: 'text', required: true, list: true, placeholder: 'Ficha de Avaliação Postural' },
-      { name: 'description', label: 'Descrição', type: 'textarea', full: true },
-      { name: 'is_default', label: 'Modelo padrão', type: 'boolean', default: false, list: true },
-      { name: 'is_active', label: 'Ativo', type: 'boolean', default: true, list: true },
-    ],
-  },
-  ficha_questions: {
-    key: 'ficha_questions', table: 'ficha_questions', title: 'Perguntas', singular: 'Pergunta',
-    perms: { view: 'assessments.view', create: 'settings.edit', edit: 'settings.edit', delete: 'settings.edit' },
-    parentField: 'template_id', orderBy: [{ column: 'sort_order' }], pageSize: 200,
-    fields: [
-      { name: 'template_id', label: 'Modelo', type: 'ref', ref: { table: 'ficha_templates', label: 'name' }, required: true, hideInForm: true },
-      { name: 'sort_order', label: 'Ordem', type: 'int', default: 10, list: true },
-      { name: 'section', label: 'Seção', type: 'text', list: true, placeholder: 'Ex.: A - Identificação do paciente' },
       { name: 'label', label: 'Pergunta', type: 'text', required: true, list: true, full: true },
       { name: 'type', label: 'Tipo de resposta', type: 'select', required: true, default: 'text', list: true, options: [
         { value: 'text', label: 'Texto curto' }, { value: 'textarea', label: 'Texto longo' }, { value: 'yes_no', label: 'Sim / Não' },

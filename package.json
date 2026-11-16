@@ -4,7 +4,7 @@
   "private": true,
   "description": "PilatesFlow — sistema de gestão para clínicas e studios de Pilates",
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
@@ -13,7 +13,9 @@
     "seed": "tsx scripts/seed.ts",
     "db:test": "bash scripts/test-db.sh",
     "backup": "tsx scripts/backup.ts",
-    "icons": "node scripts/generate-icons.mjs"
+    "icons": "node scripts/generate-icons.mjs",
+    "dev:webpack": "next dev",
+    "rapido": "next build && next start"
   },
   "dependencies": {
     "@date-fns/tz": "^1.2.0",

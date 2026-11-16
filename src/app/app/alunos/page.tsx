@@ -38,7 +38,7 @@ export default async function PatientsPage({ searchParams }: { searchParams: Pro
         title="Alunos"
         description="Alunos e pacientes da clínica."
         actions={<>
-          {ctx.can('patients.export') && <Link href="/api/export/patients?format=xlsx"><Button variant="outline"><Download /> Exportar</Button></Link>}
+          {ctx.can('patients.export') && <a href="/api/export/patients?format=xlsx"><Button variant="outline"><Download /> Exportar</Button></a>}
           {ctx.can('patients.create') && <Link href="/app/alunos/importar"><Button variant="outline"><Upload /> Importar</Button></Link>}
           {ctx.can('patients.create') && <Link href="/app/alunos/novo"><Button><Plus /> Novo aluno</Button></Link>}
         </>}

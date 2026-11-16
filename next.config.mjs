@@ -8,22 +8,21 @@ const securityHeaders = [
   { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
   { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
   { key: 'Permissions-Policy', value: 'camera=(self), microphone=(), geolocation=()' },
-  // Só em produção: navegadores ignoram HSTS recebido por transporte inseguro
-  // (http://localhost no dev), mas em produção, com hostname real, travaria
-  // domínio e subdomínios por 2 anos mesmo que um deploy futuro precise de HTTP.
-  ...(process.env.NODE_ENV === 'production'
-    ? [{ key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' }]
-    : []),
+  { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
 ];
 
 const nextConfig = {
-  // Build para contêiner: NEXT_OUTPUT=standalone gera .next/standalone com um
-  // servidor Node enxuto (usado no Dockerfile). Sem a variável o comportamento
-  // é o padrão, preservando o deploy na Vercel.
-  output: process.env.NEXT_OUTPUT === 'standalone' ? 'standalone' : undefined,
   poweredByHeader: false,
+  // O build checa os tipos (TypeScript). O lint de estilo roda à parte com `npm run lint` e não bloqueia o build.
+  eslint: { ignoreDuringBuilds: true },
+  // bibliotecas de servidor que não devem ser empacotadas (evita aviso do Turbopack sobre fstream/rimraf)
+  serverExternalPackages: ['exceljs', 'pdf-lib'],
   reactStrictMode: true,
-  experimental: { serverActions: { bodySizeLimit: '12mb' } },
+  experimental: {
+    serverActions: { bodySizeLimit: '26mb' },
+    // importa só os ícones/funções usados (compilação e carregamento mais rápidos)
+    optimizePackageImports: ['lucide-react', 'recharts', 'date-fns', '@date-fns/tz'],
+  },
   images: {
     remotePatterns: supabaseHost ? [{ protocol: 'https', hostname: supabaseHost, pathname: '/storage/v1/object/public/**' }] : [],
   },

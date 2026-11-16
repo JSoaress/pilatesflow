@@ -184,7 +184,7 @@ begin
     if v_ar.patient_id in (v_patients[4], v_patients[8]) and v_ar.due_date >= v_month_start - 35 then
       continue; -- inadimplentes
     end if;
-    if v_ar.patient_id = v_patients[6] and v_ar.due_date >= v_month_start then
+    if v_ar.patient_id = v_patients[6] and v_ar.due_date >= v_month_start - 35 then
       perform public.register_payment(v_ar.id, round(v_ar.amount / 2, 2), 'pix', least(v_ar.due_date::timestamp + interval '10 hours', now())::timestamptz, null, 'Pagamento parcial');
       continue;
     end if;
@@ -275,14 +275,21 @@ begin
   -- Avaliações (paciente 5 com duas para comparação)
   insert into assessments (organization_id, unit_id, patient_id, staff_id, type, assessed_on, height_cm, weight_kg, pain_scale, borg_scale, data, notes, conclusion, next_assessment_on)
   values (v_org, v_unit, v_patients[5], st_mariana, 'physical', v_today - 100, 178, 86.5, 6, 13,
-          '{"waist":96,"abdomen":99,"hip":104,"sit_and_reach":14,"plank":35,"sit_to_stand_30s":12,"single_leg_right":18,"single_leg_left":15,"tug":7.9}',
+          '{"waist":96,"abdomen":99,"hip":104,"sit_and_reach":14,"plank":35,"sit_to_stand_30s":12,"single_leg_right":18,"single_leg_left":15,"tug":7.9,"chest":104,"arm_right":33,"thigh_right":58,"head_forward_cm":5.5,"shoulder_diff_cm":1.6,"pelvis_diff_cm":0.8,"thoracic_kyphosis_deg":52,"lumbar_lordosis_deg":50}',
           'Avaliação inicial.', 'Encaminhado para Pilates clínico 3x/semana.', v_today - 10) returning id into v_as;
   perform public.finalize_assessment(v_as);
   insert into assessments (organization_id, unit_id, patient_id, staff_id, type, assessed_on, height_cm, weight_kg, pain_scale, borg_scale, data, notes, conclusion, next_assessment_on)
+  values (v_org, v_unit, v_patients[5], st_mariana, 'reassessment', v_today - 54, 178, 84.9, 4, 12,
+          '{"waist":94,"abdomen":97,"hip":103,"sit_and_reach":17,"plank":46,"sit_to_stand_30s":13,"single_leg_right":23,"single_leg_left":19,"tug":7.5,"chest":103.5,"arm_right":33.2,"thigh_right":57.5,"head_forward_cm":4.6,"shoulder_diff_cm":1.3,"pelvis_diff_cm":0.6,"thoracic_kyphosis_deg":49,"lumbar_lordosis_deg":48}',
+          'Reavaliação intermediária (6 semanas).', 'Evolução consistente.', v_today - 8) returning id into v_as;
+  perform public.finalize_assessment(v_as);
+  insert into assessments (organization_id, unit_id, patient_id, staff_id, type, assessed_on, height_cm, weight_kg, pain_scale, borg_scale, data, notes, conclusion, next_assessment_on)
   values (v_org, v_unit, v_patients[5], st_mariana, 'reassessment', v_today - 8, 178, 83.2, 3, 12,
-          '{"waist":92,"abdomen":95,"hip":102,"sit_and_reach":19,"plank":58,"sit_to_stand_30s":15,"single_leg_right":28,"single_leg_left":24,"tug":7.1}',
+          '{"waist":92,"abdomen":95,"hip":102,"sit_and_reach":19,"plank":58,"sit_to_stand_30s":15,"single_leg_right":28,"single_leg_left":24,"tug":7.1,"chest":103,"arm_right":33.5,"thigh_right":57,"head_forward_cm":3.8,"shoulder_diff_cm":1.0,"pelvis_diff_cm":0.5,"thoracic_kyphosis_deg":46,"lumbar_lordosis_deg":46}',
           'Reavaliação após 12 semanas.', 'Melhora de força, flexibilidade e redução da dor.', v_today + 82) returning id into v_as;
   perform public.finalize_assessment(v_as);
+  update patients set body_goals = jsonb_build_object('weight_kg', 78, 'waist', 86, 'abdomen', 89, 'head_forward_cm', 1.5,
+    'thoracic_kyphosis_deg', 38, 'lumbar_lordosis_deg', 42, 'note', 'Meta combinada na reavaliação.') where id = v_patients[5];
   insert into assessments (organization_id, unit_id, patient_id, staff_id, type, assessed_on, height_cm, weight_kg, pain_scale, data, notes, status)
   values (v_org, v_unit, v_patients[10], st_mariana, 'physical', v_today - 30, 165, 61, 5, '{"waist":74,"sit_and_reach":22,"plank":40}',
           'Avaliação inicial — ombro.', 'draft');

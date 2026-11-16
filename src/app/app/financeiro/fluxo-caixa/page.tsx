@@ -3,7 +3,7 @@ import { requirePermission } from '@/lib/auth/context';
 import { PageHeader, Table, Th, Td, Tr, ErrorState, Section } from '@/components/ui/misc';
 import { Button } from '@/components/ui/button';
 import { PeriodFilter } from '@/components/app/period-filter';
-import { resolvePeriod } from '@/components/app/period';
+import { resolvePeriod } from '@/lib/period';
 import { GroupSelect, CashMovementButton } from '@/components/app/finance/cash-controls';
 import { LineCard } from '@/components/charts/charts';
 import { date, money, todayISO, fmt } from '@/lib/format';

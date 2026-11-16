@@ -13,7 +13,7 @@ export async function ScheduleTab({ patientId }: { patientId: string; searchPara
   const since = new Date(Date.now() - 60 * 86400000).toISOString();
   const until = new Date(Date.now() + 60 * 86400000).toISOString();
   const [parts, members, credits, services, staff, rooms] = await Promise.all([
-    ctx.supabase.from('appointment_participants').select('id, status, replacement_credit_id, appointments!inner(id, starts_at, ends_at, status, services(name), staff(full_name), rooms(name))')
+    ctx.supabase.from('appointment_participants').select('id, status, replacement_credit_id, appointments!inner(id, starts_at, ends_at, status, services(name), staff!appointments_staff_id_fkey(full_name), rooms(name))')
       .eq('patient_id', patientId).gte('appointments.starts_at', since).lte('appointments.starts_at', until).limit(400),
     ctx.supabase.from('recurrence_members').select('id, status, starts_on, ends_on, paused_from, paused_until, recurrences(id, weekday, start_time, duration_min, name, services(name), staff(full_name))')
       .eq('patient_id', patientId).neq('status', 'ended'),

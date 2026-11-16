@@ -4,7 +4,7 @@ import { requirePermission } from '@/lib/auth/context';
 import { PageHeader, StatCard, ErrorState, Section, Table, Th, Td, Tr, EmptyState } from '@/components/ui/misc';
 import { Badge } from '@/components/ui/badge';
 import { PeriodFilter } from '@/components/app/period-filter';
-import { resolvePeriod } from '@/components/app/period';
+import { resolvePeriod } from '@/lib/period';
 import { BarCard } from '@/components/charts/charts';
 import { money, percent, todayISO, dateTime, date as fmtDate, WEEKDAYS_SHORT } from '@/lib/format';
 import { patientStatus, origin as originLabel, paymentMethod, leadStage, label } from '@/lib/labels';

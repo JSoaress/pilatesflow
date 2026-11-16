@@ -4,20 +4,17 @@ import { SimplePdf, pdfResponse } from '@/lib/pdf/simple';
 import { valorPorExtenso } from '@/lib/extenso';
 import { money, dateTime } from '@/lib/format';
 import { paymentMethod } from '@/lib/labels';
-import { env } from '@/lib/env';
-import { storagePublicUrl } from '@/lib/utils';
 
 /** Recibo de pagamento em PDF (equipe com acesso financeiro ou o próprio aluno). */
 export async function GET(_req: Request, { params }: { params: Promise<{ paymentId: string }> }) {
   const { paymentId } = await params;
   const supabase = await createClient();
   const { data: auth } = await supabase.auth.getUser();
-  if (!auth.user) return NextResponse.redirect(new URL('/login', env.siteUrl));
+  if (!auth.user) return NextResponse.redirect(new URL('/login', _req.url));
   const { data, error } = await supabase.rpc('receipt_data', { p_payment_id: paymentId });
   if (error || !data) return new NextResponse('Recibo não encontrado ou acesso negado.', { status: 404 });
   const r = data as any;
   const pdf = await SimplePdf.create(`Recibo ${r.receipt_number}`);
-  await pdf.logo(storagePublicUrl(env.supabaseUrl, 'site', r.logo_path));
   pdf.text(r.trade_name ?? r.company, { size: 16, bold: true });
   pdf.text([r.company !== r.trade_name ? r.company : null, r.cnpj ? `CNPJ ${r.cnpj}` : null].filter(Boolean).join(' · '), { size: 9 });
   if (r.address) pdf.text(r.address, { size: 9 });

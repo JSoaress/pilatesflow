@@ -10,13 +10,13 @@ export async function DocumentsTab({ patientId }: { patientId: string }) {
   const canClinical = ctx.can('medical_records.view') || ctx.can('assessments.view');
   const [atts, docs, templates] = await Promise.all([
     ctx.supabase.from('attachments').select('id, category, is_clinical, title, description, mime_type, size_bytes, created_at, uploaded_by, profiles:uploaded_by(full_name)')
-      .eq('patient_id', patientId).is('deleted_at', null).order('created_at', { ascending: false }),
+      .eq('patient_id', patientId).not('category', 'in', '(exam,medical_report)').is('deleted_at', null).order('created_at', { ascending: false }),
     ctx.can('documents.view') ? ctx.supabase.from('documents').select('id, type, title, status, created_at, signed_at, signed_name, requires_signature').eq('patient_id', patientId).is('deleted_at', null).order('created_at', { ascending: false }) : Promise.resolve({ data: [] }),
     ctx.can('documents.create') ? ctx.supabase.from('document_templates').select('id, name, type').eq('organization_id', ctx.org.id).eq('is_active', true).order('name') : Promise.resolve({ data: [] }),
   ]);
   return (
     <div className="space-y-6">
-      <Section title="Exames e arquivos" description={canClinical ? 'Arquivos clínicos ficam em armazenamento privado e são abertos por link temporário.' : 'Arquivos clínicos não são exibidos para o seu perfil.'}
+      <Section title="Arquivos" description={<>{canClinical ? 'Atestados, prescrições, contratos e outros arquivos. ' : ''}Laudos e exames ficam na aba{' '}<a className="font-medium text-primary hover:underline" href={`/app/alunos/${patientId}?aba=laudos`}>Laudos e exames</a>, separados por área.</>}
         actions={(ctx.can('documents.create') || ctx.can('medical_records.create')) ? <UploadAttachmentButton patientId={patientId} allowClinical={ctx.can('medical_records.create') || ctx.can('assessments.create')} /> : undefined}>
         {(atts.data ?? []).length === 0 ? <EmptyState title="Nenhum arquivo" /> : (
           <Table>

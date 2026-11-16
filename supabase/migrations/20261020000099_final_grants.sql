@@ -46,4 +46,4 @@ revoke execute on function public.gateway_confirm_payment(text, text, text, text
   public.run_automations(uuid)
   from authenticated, anon, public;
 grant execute on function public.portal_full_classes(uuid, uuid, date), public.portal_join_waitlist(uuid, uuid),
-  public.portal_waitlist(uuid), public.portal_leave_waitlist(uuid) to authenticated;
+  public.portal_waitlist(uuid), public.portal_leave_waitlist(uuid), public.portal_body_evolution(uuid) to authenticated;

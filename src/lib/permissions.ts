@@ -17,6 +17,7 @@ export const NAV = [
   { href: '/app/estoque', label: 'Estoque', icon: 'Package', perm: 'inventory.view' },
   { href: '/app/equipamentos', label: 'Equipamentos', icon: 'Wrench', perm: 'equipment.view' },
   { href: '/app/relatorios', label: 'Relatórios', icon: 'BarChart3', perm: 'reports.view' },
+  { href: '/app/documentos', label: 'Documentos', icon: 'FolderLock', perm: 'documents.view' },
   { href: '/app/tarefas', label: 'Tarefas', icon: 'ListChecks', perm: 'tasks.view' },
   { href: '/app/configuracoes', label: 'Configurações', icon: 'Settings', perm: 'settings.view' },
 ] as const;

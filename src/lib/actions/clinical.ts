@@ -156,28 +156,6 @@ export async function sendAnamnesisLink(anamnesisId: string, patientId: string, 
   });
 }
 
-// ---------------------------------------------------------------- Fichas de avaliação
-export type FichaQuestion = { id: string; section?: string | null; label: string; help_text?: string | null; type: string; options?: string[]; scale_min?: number | null; scale_max?: number | null; required?: boolean };
-
-/** Cria a ficha (snapshot das perguntas ativas do modelo) e devolve as perguntas para preenchimento imediato. */
-export async function createFicha(patientId: string, templateId: string) {
-  return runAction({ permission: 'assessments.create' }, async (ctx) => {
-    const id = must(await ctx.supabase.rpc('create_ficha', { p_patient_id: patientId, p_template_id: templateId, p_staff_id: ctx.staffId, p_appointment_id: null })) as string;
-    const { data } = await ctx.supabase.from('fichas').select('questions_snapshot').eq('id', id).single();
-    revalidatePath(`/app/alunos/${patientId}`);
-    return { id, questions: (data?.questions_snapshot ?? []) as FichaQuestion[] };
-  });
-}
-
-/** Salva as respostas e finaliza a ficha (torna imutável). Preenchimento é sempre feito pela equipe, em um único passo. */
-export async function submitFicha(id: string, patientId: string, answers: Record<string, unknown>, signature: string) {
-  return runAction({ permission: 'assessments.edit' }, async (ctx) => {
-    must(await ctx.supabase.from('fichas').update({ answers, signature_name: signature || null }).eq('id', id).eq('organization_id', ctx.org.id).eq('status', 'draft'));
-    must(await ctx.supabase.rpc('finalize_ficha', { p_id: id }));
-    revalidatePath(`/app/alunos/${patientId}`);
-  });
-}
-
 // ---------------------------------------------------------------- Anexos
 export async function uploadAttachment(patientId: string, fd: FormData) {
   return runAction({ permission: ['documents.create', 'medical_records.create'] }, async (ctx) => {
@@ -282,3 +260,18 @@ export async function setDocumentStatus(id: string, status: 'sent' | 'archived')
     revalidatePath('/app', 'layout');
   });
 }
+
+/** Guarda na ficha do aluno uma cópia da folha de orientações entregue (impressa). */
+export async function saveHandoutCopy(patientId: string, input: { title: string; content: string; template_id?: string | null }) {
+  const schema = z.object({ title: z.string().trim().min(2, 'Informe o título.').max(160), content: z.string().trim().min(1, 'A folha está vazia.').max(30000), template_id: z.string().uuid().nullable().optional() });
+  return runAction({ permission: 'documents.create', schema, input }, async (ctx, d) => {
+    const { data: p } = await ctx.supabase.from('patients').select('id, unit_id').eq('id', patientId).eq('organization_id', ctx.org.id).maybeSingle();
+    if (!p) throw new UserError('Aluno não encontrado.');
+    must(await ctx.supabase.from('documents').insert({
+      organization_id: ctx.org.id, unit_id: p.unit_id, patient_id: patientId, type: 'handout', title: d.title, template_id: d.template_id ?? null,
+      content: d.content, status: 'sent', sent_at: new Date().toISOString(), requires_signature: false, created_by: ctx.user.id,
+    }));
+    revalidatePath(`/app/alunos/${patientId}`);
+  });
+}
+

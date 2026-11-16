@@ -5,11 +5,9 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Field, Textarea } from '@/components/ui/input';
 import { saveMedicalRecord } from '@/lib/actions/clinical';
+import { MR_GROUPS } from '@/lib/clinical-labels';
 
-const GROUPS: { title: string; fields: [string, string][] }[] = [
-  { title: 'Anamnese clínica', fields: [['chief_complaint', 'Queixa principal'], ['current_history', 'História atual'], ['condition_history', 'Histórico da condição'], ['personal_history', 'Antecedentes pessoais'], ['family_history', 'Antecedentes familiares'], ['surgeries', 'Cirurgias'], ['injuries', 'Lesões'], ['diseases', 'Doenças'], ['medications', 'Medicamentos'], ['allergies', 'Alergias'], ['habits', 'Hábitos'], ['physical_activity', 'Atividade física'], ['goals', 'Objetivos'], ['limitations', 'Limitações'], ['contraindications', 'Contraindicações'], ['pain_description', 'Dor'], ['clinical_notes', 'Observações clínicas']] },
-  { title: 'Fisioterapia', fields: [['clinical_history', 'História clínica'], ['physical_exam', 'Exame físico-funcional'], ['complementary_exams', 'Exames complementares'], ['physio_diagnosis', 'Diagnóstico fisioterapêutico'], ['physio_prognosis', 'Prognóstico fisioterapêutico'], ['therapeutic_goals', 'Objetivos terapêuticos'], ['conduct', 'Conduta'], ['treatment_plan', 'Plano de tratamento']] },
-];
+const GROUPS = MR_GROUPS;
 
 export function MedicalRecordForm({ patientId, record, canEdit }: { patientId: string; record: Record<string, any> | null; canEdit: boolean }) {
   const router = useRouter();

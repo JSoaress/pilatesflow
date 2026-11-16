@@ -73,45 +73,6 @@ export function storagePublicUrl(supabaseUrl: string, bucket: string, path: stri
   return `${supabaseUrl}/storage/v1/object/public/${bucket}/${path}`;
 }
 
-/** Converte "#RRGGBB" em HSL (graus/porcentagens), ou null se não for um hex válido. */
-export function hexToHsl(hex: string | null | undefined): { h: number; s: number; l: number } | null {
-  const m = /^#?([0-9a-fA-F]{6})$/.exec((hex ?? '').trim());
-  if (!m) return null;
-  const n = parseInt(m[1], 16);
-  const r = ((n >> 16) & 255) / 255, g = ((n >> 8) & 255) / 255, b = (n & 255) / 255;
-  const max = Math.max(r, g, b), min = Math.min(r, g, b);
-  let h = 0;
-  let s = 0;
-  const l = (max + min) / 2;
-  if (max !== min) {
-    const d = max - min;
-    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-    switch (max) {
-      case r: h = (g - b) / d + (g < b ? 6 : 0); break;
-      case g: h = (b - r) / d + 2; break;
-      default: h = (r - g) / d + 4;
-    }
-    h *= 60;
-  }
-  return { h: Math.round(h), s: Math.round(s * 100), l: Math.round(l * 100) };
-}
-
-/**
- * Gera o CSS (:root e .dark) que sobrescreve a cor de marca (--primary e derivadas) com a
- * cor cadastrada pela clínica. Retorna null quando não há cor customizada (mantém o padrão).
- */
-export function brandColorStyle(hex: string | null | undefined): string | null {
-  const hsl = hexToHsl(hex);
-  if (!hsl) return null;
-  const { h, s, l } = hsl;
-  const fg = l > 60 ? '160 14% 12%' : '0 0% 100%';
-  const primary = `${h} ${s}% ${l}%`;
-  const softLight = `${h} ${Math.min(s, 45)}% 93%`;
-  const softDark = `${h} ${Math.min(s, 35)}% 18%`;
-  const base = `--primary:${primary};--primary-foreground:${fg};--ring:${primary};`;
-  return `:root{${base}--primary-soft:${softLight};--sidebar-active:${softLight};}.dark{${base}--primary-soft:${softDark};--sidebar-active:${softDark};}`;
-}
-
 export function sleep(ms: number) {
   return new Promise((r) => setTimeout(r, ms));
 }

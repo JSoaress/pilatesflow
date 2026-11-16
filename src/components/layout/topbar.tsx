@@ -1,7 +1,7 @@
 'use client';
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
-import { Menu as MenuIcon, Building2, ChevronDown, LogOut, UserRound, ShieldCheck, Check, MonitorSmartphone } from 'lucide-react';
+import { Menu as MenuIcon, Building2, ChevronDown, LogOut, UserRound, ShieldCheck, Check, MonitorSmartphone, KeyRound } from 'lucide-react';
 import { toast } from 'sonner';
 import { Menu, MenuItem, MenuLink } from '@/components/ui/menu';
 import { Avatar } from '@/components/ui/misc';
@@ -16,16 +16,16 @@ import { MobileNav, type NavItem } from './sidebar';
 type Props = {
   items: NavItem[];
   appName: string;
-  logoUrl?: string | null;
   user: { name: string; email: string | null; role: string };
   orgs: { id: string; name: string }[];
   orgId: string;
   units: { id: string; name: string }[];
   unitId: string | null;
   allUnits: boolean;
+  isPlatformAdmin?: boolean;
 };
 
-export function Topbar({ items, appName, logoUrl, user, orgs, orgId, units, unitId, allUnits }: Props) {
+export function Topbar({ items, appName, user, orgs, orgId, units, unitId, allUnits, isPlatformAdmin }: Props) {
   const router = useRouter();
   const [mobile, setMobile] = React.useState(false);
   const [pending, start] = React.useTransition();
@@ -37,7 +37,7 @@ export function Topbar({ items, appName, logoUrl, user, orgs, orgId, units, unit
   return (
     <header className="no-print sticky top-0 z-20 flex h-16 items-center gap-2 border-b bg-background/85 px-3 backdrop-blur sm:px-5">
       <Button variant="ghost" size="icon" className="lg:hidden" onClick={() => setMobile(true)} aria-label="Abrir menu"><MenuIcon /></Button>
-      <MobileNav items={items} appName={appName} logoUrl={logoUrl} open={mobile} onClose={() => setMobile(false)} />
+      <MobileNav items={items} appName={appName} open={mobile} onClose={() => setMobile(false)} />
       <div className="min-w-0 flex-1"><GlobalSearch /></div>
 
       {(units.length > 1 || allUnits) && units.length > 0 && (
@@ -91,6 +91,7 @@ export function Topbar({ items, appName, logoUrl, user, orgs, orgId, units, unit
               </div>
             )}
             <MenuLink href="/app/configuracoes/conta" onClick={close}><UserRound /> Minha conta</MenuLink>
+            {isPlatformAdmin && <MenuLink href="/plataforma" onClick={close}><KeyRound /> Painel da plataforma</MenuLink>}
             <MenuLink href="/app/checkin" onClick={close}><MonitorSmartphone /> Modo check-in</MenuLink>
             <MenuLink href="/privacidade" onClick={close}><ShieldCheck /> Privacidade</MenuLink>
             <MenuItem destructive onClick={() => { close(); start(async () => { await logoutAction('local'); }); }}><LogOut /> Sair</MenuItem>

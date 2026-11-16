@@ -27,6 +27,9 @@ begin
   assert (select count(*) from payments where organization_id = o) >= 5, 'pagamentos < 5';
   assert (select count(*) from accounts_payable where organization_id = o) >= 3, 'despesas < 3';
   assert (select count(*) from assessments where organization_id = o) >= 3, 'avaliações < 3';
+  assert (select count(*) from assessment_fields where organization_id = o and section = 'posture') = 5, 'campos posturais ausentes';
+  assert (select count(*) from assessments where organization_id = o and data ? 'thoracic_kyphosis_deg') >= 3, 'demo sem dados posturais';
+  assert (select count(*) from document_templates where organization_id = o and type = 'handout') = 3, 'modelos de orientação ausentes';
   assert (select count(*) from exercises where organization_id = o) >= 10, 'exercícios < 10';
   assert (select count(*) from equipment where organization_id = o) >= 3, 'equipamentos < 3';
   assert (select count(*) from notifications where organization_id = o) > 0, 'sem notificações';
@@ -283,6 +286,9 @@ begin
   pid := (v -> 0 ->> 'patient_id')::uuid;
   assert jsonb_array_length(public.portal_appointments(pid, now() - interval '30 days', now() + interval '30 days')) > 0, 'portal sem aulas';
   assert jsonb_typeof(public.portal_financial(pid) -> 'receivables') = 'array', 'portal sem financeiro';
+  assert jsonb_typeof(public.portal_body_evolution(pid) -> 'history') = 'array', 'portal sem evolução corporal';
+  begin perform public.portal_body_evolution('00000000-0000-0000-0000-000000000000'); v_ok := false; exception when others then v_ok := true; end;
+  assert v_ok, 'evolução corporal de outro aluno acessível'; v_ok := false;
   reset role;
   select id into other from patients where id <> pid and organization_id = (select organization_id from patients where id = pid) limit 1;
   set role authenticated;
@@ -398,5 +404,132 @@ begin
   assert n > 0, 'fila de mensagens vazia';
   assert (select count(*) from messages where status = 'failed' and error like 'Integração%') = n, 'mensagem marcada como enviada sem envio real';
 end $$;
+
+-- app_bootstrap: dono vê org, permissões e unidades; aluno não vê org; intruso não vê nada
+select public.test_login('00000000-0000-0000-0000-00000000000a');
+set role authenticated;
+do $$ declare b jsonb := public.app_bootstrap(null); begin
+  assert jsonb_array_length(b -> 'orgs') = 1, 'bootstrap sem org';
+  assert jsonb_array_length(b -> 'permissions') > 50, 'bootstrap sem permissões';
+  assert jsonb_array_length(b -> 'units') >= 1, 'bootstrap sem unidades';
+end $$;
+reset role;
+select public.test_login('00000000-0000-0000-0000-00000000000e');
+set role authenticated;
+do $$ declare b jsonb := public.app_bootstrap(null); begin
+  assert jsonb_array_length(b -> 'orgs') = 0 and (b ->> 'is_patient')::boolean, 'aluno deveria ir ao portal';
+end $$;
+reset role;
+select public.test_login('00000000-0000-0000-0000-00000000000f');
+set role authenticated;
+do $$ declare b jsonb := public.app_bootstrap(null); begin
+  assert jsonb_array_length(b -> 'orgs') = 0 and b -> 'permissions' is null, 'intruso recebeu dados';
+end $$;
+reset role;
+
+-- Fichas de avaliação: avaliação com ficha fica imutável depois de finalizada; modelo personalizado só com permissão
+select public.test_login('00000000-0000-0000-0000-00000000000b');
+set role authenticated;
+do $$ declare o uuid := (select id from organizations where slug = 'studio-movimento'); p uuid; a uuid; begin
+  select id into p from patients where organization_id = o and deleted_at is null limit 1;
+  insert into assessments (organization_id, patient_id, type, form_key, form_name, form_version, form_schema, form_answers, form_scores)
+    values (o, p, 'clinical_form', 'sys:fibromialgia', 'Fibromialgia', 1, '{"sections":[]}', '{"fadiga":"2"}', '{"egs":{"value":2}}') returning id into a;
+  update assessments set form_answers = '{"fadiga":"3"}' where id = a;
+  perform public.finalize_assessment(a);
+  begin update assessments set form_answers = '{}' where id = a; raise exception 'ficha finalizada foi alterada'; exception when insufficient_privilege then null; end;
+  begin insert into evaluation_templates (organization_id, name, schema) values (o, 'Minha ficha', '{"sections":[]}'); raise exception 'fisio sem settings.edit criou modelo';
+  exception when insufficient_privilege then null; end;
+end $$;
+reset role;
+select public.test_login('00000000-0000-0000-0000-00000000000a');
+set role authenticated;
+do $$ declare o uuid := (select id from organizations where slug = 'studio-movimento'); begin
+  insert into evaluation_templates (organization_id, name, schema) values (o, 'Minha ficha', '{"sections":[]}');
+  begin insert into evaluation_templates (organization_id, name, schema) values (o, 'Inválida', '{}'); raise exception 'modelo sem seções aceito';
+  exception when check_violation then null; end;
+end $$;
+reset role;
+
+-- Laudos: separados por área, arquivo imutável, vínculo só com avaliação do mesmo paciente
+select public.test_login('00000000-0000-0000-0000-00000000000b');
+set role authenticated;
+do $$ declare o uuid := (select id from organizations where slug = 'studio-movimento'); p uuid; p2 uuid; a uuid; a2 uuid; r uuid; n int; begin
+  select id into p from patients where organization_id = o and deleted_at is null order by id limit 1;
+  select id into p2 from patients where organization_id = o and deleted_at is null and id <> p order by id limit 1;
+  select id into a from assessments where patient_id = p limit 1;
+  select id into a2 from assessments where patient_id = p2 limit 1;
+  if a is null then
+    insert into assessments (organization_id, patient_id, type) values (o, p, 'physical') returning id into a;
+  end if;
+  insert into attachments (organization_id, patient_id, category, is_clinical, title, bucket, storage_path, exam_area, exam_kind, exam_date, findings, assessment_id)
+    values (o, p, 'medical_report', true, 'Laudo reumatológico', 'clinical', o::text || '/patients/' || p::text || '/laudos/fibromialgia/x.pdf', 'fibromialgia', 'relatorio_medico', current_date, 'Fibromialgia confirmada', a)
+    returning id into r;
+  update attachments set findings = 'Fibromialgia confirmada (ACR 2016)', exam_kind = 'laboratorial' where id = r;
+  get diagnostics n = row_count;
+  assert n = 1, 'fisio não conseguiu corrigir o laudo';
+  begin update attachments set storage_path = 'outro.pdf' where id = r; raise exception 'arquivo do laudo foi trocado'; exception when insufficient_privilege then null; end;
+  begin insert into attachments (organization_id, patient_id, category, is_clinical, title, bucket, storage_path, exam_area)
+    values (o, p, 'exam', true, 'X', 'clinical', 'x', 'astrologia'); raise exception 'área inválida aceita'; exception when check_violation then null; end;
+  if a2 is not null then
+    begin insert into attachments (organization_id, patient_id, category, is_clinical, title, bucket, storage_path, exam_area, assessment_id)
+      values (o, p, 'exam', true, 'X', 'clinical', 'x', 'postural', a2); raise exception 'vinculou avaliação de outro paciente'; exception when check_violation then null; end;
+  end if;
+  assert (select count(*) from attachments where patient_id = p and exam_area = 'fibromialgia' and deleted_at is null) >= 1, 'laudo não listado na área';
+end $$;
+reset role;
+
+-- Licença: teste de 7 dias, bloqueio no banco e painel da plataforma
+do $$ declare o uuid := (select id from organizations where slug = 'studio-movimento'); begin
+  assert (select license_status from organizations where id = o) = 'trial', 'clínica nova deveria nascer em teste';
+  assert (select trial_ends_at between now() + interval '6 days' and now() + interval '8 days' from organizations where id = o), 'teste deveria ser de 7 dias';
+end $$;
+select public.test_login('00000000-0000-0000-0000-00000000000a');
+set role authenticated;
+do $$ declare o uuid := (select id from organizations where slug = 'studio-movimento'); b jsonb; begin
+  b := public.app_bootstrap(o);
+  assert (b -> 'license' ->> 'ok')::boolean, 'licença em teste deveria estar válida';
+  assert not (b ->> 'is_platform_admin')::boolean, 'dono da clínica não é admin da plataforma';
+  -- o dono da clínica não consegue mexer na própria licença
+  begin update organizations set trial_ends_at = now() + interval '1 year' where id = o; raise exception 'dono alterou a licença';
+  exception when insufficient_privilege then null; end;
+  begin perform public.platform_set_license(o, 'activate', null, null); raise exception 'dono se auto-ativou';
+  exception when insufficient_privilege then null; end;
+  begin perform public.platform_orgs(); raise exception 'dono viu o painel da plataforma';
+  exception when insufficient_privilege then null; end;
+end $$;
+reset role;
+-- vence o teste: tudo bloqueado no banco
+update organizations set trial_ends_at = now() - interval '1 minute' where slug = 'studio-movimento';
+select public.test_login('00000000-0000-0000-0000-00000000000a');
+set role authenticated;
+do $$ declare o uuid := (select id from organizations where slug = 'studio-movimento'); b jsonb; n int; begin
+  b := public.app_bootstrap(o);
+  assert not (b -> 'license' ->> 'ok')::boolean, 'licença vencida deveria estar inválida';
+  assert jsonb_array_length(b -> 'permissions') = 0, 'licença vencida não deveria ter permissões';
+  select count(*) into n from patients where organization_id = o;
+  assert n = 0, 'licença vencida ainda lê pacientes';
+end $$;
+reset role;
+-- administrador da plataforma libera
+insert into platform_admins (user_id) values ('00000000-0000-0000-0000-00000000000b');
+select public.test_login('00000000-0000-0000-0000-00000000000b');
+set role authenticated;
+do $$ declare o uuid := (select id from organizations where slug = 'studio-movimento'); r jsonb; begin
+  assert jsonb_array_length(public.platform_orgs()) >= 1, 'painel vazio';
+  r := public.platform_set_license(o, 'extend_trial', 7, 'Pediu mais prazo');
+  assert (r ->> 'ok')::boolean and r ->> 'status' = 'trial', 'extensão falhou';
+  r := public.platform_set_license(o, 'activate', 30, 'Plano mensal');
+  assert (r ->> 'ok')::boolean and r ->> 'status' = 'active', 'ativação falhou';
+  r := public.platform_set_license(o, 'suspend', null, 'Inadimplente');
+  assert not (r ->> 'ok')::boolean, 'suspensão falhou';
+  r := public.platform_set_license(o, 'activate', null, null);
+  assert (r ->> 'ok')::boolean and r ->> 'until' is null, 'ativação sem prazo falhou';
+  begin perform public.platform_set_license(o, 'activate', 0, null); raise exception 'aceitou 0 dias'; exception when invalid_parameter_value then null; end;
+end $$;
+reset role;
+do $$ begin
+  assert (select count(*) from license_events) >= 4, 'histórico da licença não registrado';
+end $$;
+delete from platform_admins;
 
 \echo 'TODOS OS TESTES PASSARAM'

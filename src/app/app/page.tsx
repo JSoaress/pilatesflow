@@ -5,7 +5,7 @@ import { PageHeader, StatCard, ErrorState, Section, EmptyState } from '@/compone
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { PeriodFilter } from '@/components/app/period-filter';
-import { resolvePeriod } from '@/components/app/period';
+import { resolvePeriod } from '@/lib/period';
 import { BarCard, LineCard, ComboCard } from '@/components/charts/charts';
 import { money, percent, todayISO, date as fmtDate, time, localToISO, addDaysISO } from '@/lib/format';
 import { participantStatus, participantStatusColor, leadStage } from '@/lib/labels';
@@ -26,7 +26,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
   const dayQuery = canSchedule
     ? (() => {
         let q = ctx.supabase.from('appointments')
-          .select('id, starts_at, ends_at, status, kind, capacity, service:services(name, color), staff:staff(full_name), room:rooms(name), participants:appointment_participants(id, status, patient_id, patient:patients(full_name, social_name))')
+          .select('id, starts_at, ends_at, status, kind, capacity, service:services(name, color), staff:staff!appointments_staff_id_fkey(full_name), room:rooms(name), participants:appointment_participants(id, status, patient_id, patient:patients(full_name, social_name))')
           .eq('organization_id', ctx.org.id).neq('status', 'cancelled')
           .gte('starts_at', localToISO(today, '00:00', ctx.tz)).lt('starts_at', localToISO(addDaysISO(today, 1), '00:00', ctx.tz)).order('starts_at').limit(200);
         if (ctx.unitId) q = q.eq('unit_id', ctx.unitId);

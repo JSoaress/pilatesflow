@@ -130,11 +130,3 @@ export async function saveEvolutionTemplate(id: string | null, input: z.input<ty
   });
 }
 
-/** Exclui um modelo de evolução. */
-export async function deleteEvolutionTemplate(id: string) {
-  return runAction({ permission: ['settings.edit', 'medical_records.edit'] }, async (ctx) => {
-    must(await ctx.supabase.from('evolution_templates').delete().eq('id', id).eq('organization_id', ctx.org.id));
-    revalidatePath('/app/configuracoes/modelos');
-  });
-}
-

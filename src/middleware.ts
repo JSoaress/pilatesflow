@@ -1,21 +1,23 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { updateSession } from '@/lib/supabase/middleware';
-import { env } from '@/lib/env';
 
-const PROTECTED = ['/app', '/portal', '/onboarding'];
-const AUTH_PAGES = ['/login', '/cadastro', '/recuperar-senha'];
+const PROTECTED = ['/app', '/portal', '/onboarding', '/imprimir', '/licenca', '/plataforma'];
+const AUTH_PAGES = ['/login', '/cadastro'];
 
 export async function middleware(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
   const { response, user } = await updateSession(request);
 
   if (!user && PROTECTED.some((p) => pathname === p || pathname.startsWith(p + '/'))) {
-    const url = new URL('/login', env.siteUrl);
+    const url = request.nextUrl.clone();
+    url.pathname = '/login';
     url.search = `?next=${encodeURIComponent(pathname + search)}`;
     return NextResponse.redirect(url);
   }
   if (user && AUTH_PAGES.includes(pathname)) {
-    const url = new URL('/entrar', env.siteUrl);
+    const url = request.nextUrl.clone();
+    url.pathname = '/entrar';
+    url.search = '';
     return NextResponse.redirect(url);
   }
   // Áreas autenticadas não devem ser armazenadas em cache compartilhado

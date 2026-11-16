@@ -8,3 +8,9 @@ out
 backups/
 .DS_Store
 supabase/.temp
+
+# chaves e segredos (nunca enviar)
+.env*
+!.env.example
+*.tgz
+*.tar.gz

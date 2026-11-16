@@ -20,7 +20,7 @@ export async function SummaryTab({ patientId, balance }: { patientId: string; ba
   const fin = ctx.can('finance.view');
 
   const [next, last, stats, debts, contract, risk, events, payments, subs, interactions, evolutions, assessments] = await Promise.all([
-    ctx.supabase.from('appointment_participants').select('status, appointments!inner(starts_at, services(name), staff(full_name))')
+    ctx.supabase.from('appointment_participants').select('status, appointments!inner(starts_at, services(name), staff!appointments_staff_id_fkey(full_name))')
       .eq('patient_id', patientId).in('status', ['scheduled', 'confirmed', 'replacement']).gte('appointments.starts_at', now)
       .limit(150),
     ctx.supabase.from('appointment_participants').select('status, checked_in_at, appointments!inner(starts_at)')

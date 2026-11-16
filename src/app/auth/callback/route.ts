@@ -1,6 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { env } from '@/lib/env';
 
 /** Troca o código do link de e-mail (confirmação, convite, recuperação) por sessão. */
 export async function GET(request: NextRequest) {
@@ -11,7 +10,7 @@ export async function GET(request: NextRequest) {
   if (code) {
     const supabase = await createClient();
     const { error } = await supabase.auth.exchangeCodeForSession(code);
-    if (!error) return NextResponse.redirect(new URL(next, env.siteUrl));
+    if (!error) return NextResponse.redirect(new URL(next, url.origin));
   }
-  return NextResponse.redirect(new URL('/login?erro=' + encodeURIComponent('Link inválido ou expirado. Solicite um novo.'), env.siteUrl));
+  return NextResponse.redirect(new URL('/login?erro=' + encodeURIComponent('Link inválido ou expirado. Solicite um novo.'), url.origin));
 }

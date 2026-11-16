@@ -16,7 +16,7 @@ export default async function AssessmentsPage({ searchParams }: { searchParams: 
   const sp = await searchParams;
   const tab = ['reavaliacoes', 'campos'].includes(sp.aba) ? sp.aba : 'recentes';
   const [{ data: recent }, { data: due }] = await Promise.all([
-    tab === 'recentes' ? ctx.supabase.from('assessments').select('id, type, assessed_on, weight_kg, bmi, status, patients(id, full_name), staff(full_name)').eq('organization_id', ctx.org.id).order('assessed_on', { ascending: false }).limit(60) : Promise.resolve({ data: [] }),
+    tab === 'recentes' ? ctx.supabase.from('assessments').select('id, type, form_name, assessed_on, weight_kg, bmi, status, patients(id, full_name), staff(full_name)').eq('organization_id', ctx.org.id).order('assessed_on', { ascending: false }).limit(60) : Promise.resolve({ data: [] }),
     tab === 'reavaliacoes' ? ctx.supabase.rpc('patients_due_reassessment', { p_org: ctx.org.id, p_limit: 200 }) : Promise.resolve({ data: [] }),
   ]);
   return (
@@ -32,7 +32,7 @@ export default async function AssessmentsPage({ searchParams }: { searchParams: 
               <Tr key={a.id}>
                 <Td><Link href={`/app/avaliacoes/${a.id}`} className="text-primary hover:underline">{date(a.assessed_on)}</Link></Td>
                 <Td><Link href={`/app/alunos/${a.patients?.id}?aba=avaliacoes`} className="hover:underline">{a.patients?.full_name}</Link></Td>
-                <Td>{label(assessmentType, a.type)}</Td>
+                <Td>{a.form_name ?? label(assessmentType, a.type)}</Td>
                 <Td className="tabular-nums">{a.weight_kg ? `${number(a.weight_kg, 1)} kg` : '—'}</Td>
                 <Td className="tabular-nums">{a.bmi ? number(a.bmi, 1) : '—'}</Td>
                 <Td>{a.staff?.full_name ?? '—'}</Td>

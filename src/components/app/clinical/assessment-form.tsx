@@ -12,7 +12,7 @@ import { todayISO } from '@/lib/format';
 import { PatientPicker, type PickedPatient } from '@/components/app/agenda/patient-picker';
 
 export type FieldCfg = { key: string; label: string; unit: string | null; section: string; input_type: string };
-const SECTIONS: Record<string, string> = { circumferences: 'Circunferências', rom: 'Amplitude de movimento', flexibility: 'Flexibilidade', strength: 'Força', mobility: 'Mobilidade', balance: 'Equilíbrio', coordination: 'Coordenação', endurance: 'Resistência', functional_tests: 'Testes funcionais', other: 'Outros' };
+const SECTIONS: Record<string, string> = { circumferences: 'Circunferências', rom: 'Amplitude de movimento', flexibility: 'Flexibilidade', strength: 'Força', mobility: 'Mobilidade', balance: 'Equilíbrio', coordination: 'Coordenação', endurance: 'Resistência', functional_tests: 'Testes funcionais', posture: 'Postura', other: 'Outros' };
 
 /** Avaliação física/funcional com campos configuráveis, IMC automático e escalas de dor e Borg. */
 export function AssessmentForm({ assessment, fields, patient, staff }: { assessment?: Record<string, any> | null; fields: FieldCfg[]; patient?: PickedPatient | null; staff: { id: string; name: string }[] }) {

@@ -17,13 +17,14 @@ export async function switchUnit(unitId: string | 'all') {
 }
 
 export async function switchOrg(orgId: string) {
-  return runAction({}, async (ctx) => {
+  return runAction({ allowUnlicensed: true }, async (ctx) => {
     if (!ctx.orgs.some((o) => o.id === orgId)) throw new Error('Organização inválida');
     const store = await cookies();
     store.set(ORG_COOKIE, orgId, cookieOpts);
     store.delete(UNIT_COOKIE);
     await ctx.supabase.from('profiles').update({ last_organization_id: orgId }).eq('id', ctx.user.id);
     revalidatePath('/app', 'layout');
+    revalidatePath('/licenca');
   });
 }
 

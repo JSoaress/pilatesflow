@@ -10,6 +10,7 @@ import { MedicalTab } from '@/components/app/patient/medical-tab';
 import { AssessmentsTab } from '@/components/app/patient/assessments-tab';
 import { ProgramsTab } from '@/components/app/patient/programs-tab';
 import { DocumentsTab } from '@/components/app/patient/documents-tab';
+import { ReportsTab } from '@/components/app/patient/reports-tab';
 import { MessagesTab } from '@/components/app/patient/messages-tab';
 import { signedUrl } from '@/lib/storage';
 
@@ -38,6 +39,7 @@ export default async function PatientPage({ params, searchParams }: { params: Pr
     { id: 'financeiro', label: 'Plano e financeiro', hidden: !(ctx.can('finance.view') || ctx.can('plans.view')) },
     { id: 'prontuario', label: 'Prontuário', hidden: !ctx.can('medical_records.view') },
     { id: 'avaliacoes', label: 'Avaliações e anamnese', hidden: !ctx.can('assessments.view') },
+    { id: 'laudos', label: 'Laudos e exames', hidden: !(ctx.can('medical_records.view') || ctx.can('assessments.view')) },
     { id: 'exercicios', label: 'Exercícios', hidden: !ctx.can('exercises.view') },
     { id: 'documentos', label: 'Documentos', hidden: !(ctx.can('documents.view') || ctx.can('contracts.view')) },
     { id: 'mensagens', label: 'Mensagens', hidden: !(ctx.can('communication.view') || ctx.can('crm.view')) },
@@ -55,6 +57,7 @@ export default async function PatientPage({ params, searchParams }: { params: Pr
       {active === 'financeiro' && <FinanceTab patientId={id} />}
       {active === 'prontuario' && <MedicalTab patientId={id} />}
       {active === 'avaliacoes' && <AssessmentsTab patientId={id} />}
+      {active === 'laudos' && <ReportsTab patientId={id} area={sp.esp} />}
       {active === 'exercicios' && <ProgramsTab patientId={id} />}
       {active === 'documentos' && <DocumentsTab patientId={id} />}
       {active === 'mensagens' && <MessagesTab patient={patient} />}

@@ -2,6 +2,7 @@ import 'server-only';
 import { cache } from 'react';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
+import { sessionUser } from '@/lib/supabase/claims';
 
 export type PortalPatient = {
   patient_id: string; organization_id: string; organization_name: string; organization_slug: string; logo_path: string | null;
@@ -15,11 +16,11 @@ export type PortalPatient = {
 /** Contexto do Portal do Aluno: somente dados do próprio aluno (via RPCs restritas). */
 export const getPortalContext = cache(async (wanted?: string) => {
   const supabase = await createClient();
-  const { data: auth } = await supabase.auth.getUser();
-  if (!auth.user) redirect('/login?next=/portal');
+  const user = await sessionUser(supabase);
+  if (!user) redirect('/login?next=/portal');
   const { data } = await supabase.rpc('portal_me');
   const list = (data ?? []) as PortalPatient[];
   if (!list.length) redirect('/entrar');
   const me = list.find((p) => p.patient_id === wanted) ?? list[0];
-  return { supabase, user: auth.user, me, all: list };
+  return { supabase, user, me, all: list };
 });

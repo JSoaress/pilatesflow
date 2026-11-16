@@ -4,7 +4,7 @@
 import { config } from 'dotenv';
 import { createClient } from '@supabase/supabase-js';
 
-config({ path: '.env.docker' });
+config({ path: '.env.local' });
 config();
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;

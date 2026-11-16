@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { env } from '@/lib/env';
+import { sessionUser } from './claims';
 
 /** Renova a sessão (cookies) e devolve o usuário autenticado, se houver. */
 export async function updateSession(request: NextRequest) {
@@ -17,8 +18,6 @@ export async function updateSession(request: NextRequest) {
       },
     },
   });
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await sessionUser(supabase);
   return { response, user };
 }

@@ -67,7 +67,7 @@ function MemberDialog({ mode, member, roles, units, staff, onClose }: { mode: 'i
   const [v, setV] = React.useState({ email: '', full_name: '', role_id: member?.role_id ?? roles.find((r) => r.key === 'receptionist')?.id ?? roles[0]?.id ?? '', status: (member?.status === 'suspended' ? 'suspended' : 'active') as 'active' | 'suspended', unit_ids: member?.all_units ? [] : member?.unit_ids ?? [], staff_id: '' });
   const [pending, start] = React.useTransition();
   const toggleUnit = (id: string) => setV((s) => ({ ...s, unit_ids: s.unit_ids.includes(id) ? s.unit_ids.filter((x) => x !== id) : [...s.unit_ids, id] }));
-  const submit = () => start(async (): Promise<void> => {
+  const submit = () => start(async () => {
     const r = mode === 'invite'
       ? await inviteMember({ email: v.email, full_name: v.full_name, role_id: v.role_id, unit_ids: v.unit_ids, staff_id: v.staff_id || null })
       : await updateMember(member!.id, { role_id: v.role_id, status: v.status, unit_ids: v.unit_ids });

@@ -1,7 +1,9 @@
+import { Printer } from 'lucide-react';
 import { getAppContext } from '@/lib/auth/context';
 import { Section, EmptyState } from '@/components/ui/misc';
 import { Badge } from '@/components/ui/badge';
 import { date } from '@/lib/format';
+import { Button } from '@/components/ui/button';
 import { ProgramEditor, NewProgramButton } from '@/components/app/clinical/program-editor';
 
 export async function ProgramsTab({ patientId }: { patientId: string }) {
@@ -27,6 +29,7 @@ export async function ProgramsTab({ patientId }: { patientId: string }) {
                     <p className="font-medium">{p.name} {p.status === 'archived' && <Badge variant="neutral">Arquivado</Badge>}</p>
                     <p className="text-sm text-muted-foreground">{p.goal ?? ''}{p.start_date && ` · desde ${date(p.start_date)}`}{p.staff?.full_name && ` · ${p.staff.full_name}`}</p>
                   </div>
+                  <a href={`/imprimir/programa/${p.id}`} target="_blank" rel="noopener"><Button size="sm" variant="outline"><Printer /> Imprimir para o aluno</Button></a>
                 </div>
                 <ProgramEditor programId={p.id} status={p.status} items={((p.items ?? []) as any[]).sort((a, b) => a.sort_order - b.sort_order)} exercises={(exercises.data ?? []) as any[]} canEdit={canEdit && p.status === 'active'} />
               </div>

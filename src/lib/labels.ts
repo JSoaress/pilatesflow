@@ -60,7 +60,7 @@ export const gender: Record<string, string> = { female: 'Feminino', male: 'Mascu
 export const taskPriority: Record<string, string> = { low: 'Baixa', normal: 'Normal', high: 'Alta', urgent: 'Urgente' };
 export const taskStatus: Record<string, string> = { open: 'Aberta', in_progress: 'Em andamento', done: 'Concluída', cancelled: 'Cancelada' };
 export const exerciseLevel: Record<string, string> = { beginner: 'Iniciante', intermediate: 'Intermediário', advanced: 'Avançado' };
-export const assessmentType: Record<string, string> = { physical: 'Física', postural: 'Postural', functional: 'Funcional', reassessment: 'Reavaliação' };
+export const assessmentType: Record<string, string> = { physical: 'Física', postural: 'Postural', functional: 'Funcional', reassessment: 'Reavaliação', clinical_form: 'Ficha clínica' };
 export const posturalView: Record<string, string> = {
   anterior: 'Anterior', posterior: 'Posterior', right_lateral: 'Lateral direita', left_lateral: 'Lateral esquerda', other: 'Outra',
 };
@@ -71,7 +71,7 @@ export const attachmentCategory: Record<string, string> = {
 };
 export const documentType: Record<string, string> = {
   contract: 'Contrato', anamnesis: 'Anamnese', consent_term: 'Termo de consentimento', image_authorization: 'Autorização de uso de imagem',
-  privacy_policy: 'Política de privacidade', assessment: 'Avaliação', certificate: 'Atestado', exam: 'Exame', receipt: 'Recibo', other: 'Outros',
+  privacy_policy: 'Política de privacidade', assessment: 'Avaliação', certificate: 'Atestado', exam: 'Exame', receipt: 'Recibo', handout: 'Orientações ao aluno', other: 'Outros',
 };
 export const documentStatus: Record<string, string> = { draft: 'Rascunho', sent: 'Enviado', signed: 'Assinado', archived: 'Arquivado' };
 export const contractStatus: Record<string, string> = { draft: 'Rascunho', sent: 'Enviado', accepted: 'Aceito', cancelled: 'Cancelado', expired: 'Vencido' };
@@ -95,7 +95,7 @@ export const commissionBasis: Record<string, string> = {
 export const auditAction: Record<string, string> = {
   insert: 'Criou', update: 'Alterou', delete: 'Excluiu', soft_delete: 'Arquivou', refund: 'Estornou', finalize: 'Finalizou',
   export: 'Exportou', download: 'Baixou arquivo', anonymize: 'Anonimizou', grant_permission: 'Concedeu permissão',
-  revoke_permission: 'Revogou permissão', login: 'Entrou', invite: 'Convidou',
+  revoke_permission: 'Revogou permissão', login: 'Entrou', invite: 'Convidou', print: 'Imprimiu',
 };
 export const entityLabel: Record<string, string> = {
   patients: 'Aluno', appointments: 'Agendamento', appointment_participants: 'Participação', accounts_receivable: 'Conta a receber',
@@ -104,6 +104,7 @@ export const entityLabel: Record<string, string> = {
   contracts: 'Contrato', roles: 'Perfil', role_permissions: 'Permissões', organization_members: 'Usuário', staff: 'Profissional',
   leads: 'Lead', equipment: 'Equipamento', units: 'Unidade', organizations: 'Clínica', system_settings: 'Configuração',
   attachments: 'Arquivo', documents: 'Documento', postural_photos: 'Foto postural', services: 'Modalidade', rooms: 'Sala',
+  patient_programs: 'Programa de exercícios', receivables: 'Contas a receber', report: 'Relatório', 'cash-flow': 'Fluxo de caixa',
 };
 export function label(map: Record<string, string>, key: string | null | undefined) {
   if (!key) return '—';

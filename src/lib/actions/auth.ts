@@ -49,7 +49,7 @@ const signupSchema = z.object({
   full_name: z.string().trim().min(3, 'Informe seu nome completo.'),
   email: z.string().trim().toLowerCase().email('Informe um e-mail válido.'),
   password,
-  accept: z.literal(true, { errorMap: () => ({ message: 'É preciso aceitar os Termos de Uso e a Política de Privacidade.' }) }),
+  accept: z.literal(true, { error: 'É preciso aceitar os Termos de Uso e a Política de Privacidade.' }),
 });
 
 export async function signupAction(input: unknown): Promise<Res> {

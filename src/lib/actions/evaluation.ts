@@ -14,7 +14,7 @@ const formSchema = z.object({
   form_key: z.string().min(3).max(60),
   assessed_on: isoDate,
   staff_id: z.preprocess((v) => (v === '' ? null : v), z.string().uuid().nullable().optional()),
-  answers: z.record(z.unknown()).default({}),
+  answers: z.record(z.string(), z.unknown()).default({}),
   conclusion: z.preprocess((v) => (v === '' ? null : v), z.string().max(8000).nullable().optional()),
   next_assessment_on: z.preprocess((v) => (v === '' ? null : v), isoDate.nullable().optional()),
   finalize: z.boolean().default(false),

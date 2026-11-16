@@ -9,7 +9,7 @@ const optUuid = z.preprocess((v) => (v === '' || v === undefined ? null : v), z.
 
 const apptSchema = z.object({
   unit_id: uuid,
-  service_id: z.string({ required_error: 'Selecione a modalidade.' }).uuid('Selecione a modalidade.'),
+  service_id: z.string({ error: 'Selecione a modalidade.' }).uuid('Selecione a modalidade.'),
   staff_id: optUuid,
   room_id: optUuid,
   equipment_id: optUuid,
@@ -129,7 +129,7 @@ export async function cancelWaitlist(id: string) {
 
 const fixedSchema = z.object({
   unit_id: uuid,
-  service_id: z.string({ required_error: 'Selecione a modalidade.' }).uuid('Selecione a modalidade.'),
+  service_id: z.string({ error: 'Selecione a modalidade.' }).uuid('Selecione a modalidade.'),
   staff_id: optUuid,
   room_id: optUuid,
   equipment_id: optUuid,

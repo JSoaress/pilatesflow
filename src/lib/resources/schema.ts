@@ -15,14 +15,14 @@ function fieldSchema(f: FieldDef): z.ZodTypeAny {
     case 'number':
     case 'money':
     case 'percent': {
-      let s = z.number({ invalid_type_error: `"${f.label}" deve ser um número.`, required_error: reqMsg });
+      let s = z.number({ error: `"${f.label}" deve ser um número.` });
       if (f.type !== 'number' || f.min !== undefined) s = s.min(f.min ?? 0, `"${f.label}": valor mínimo ${f.min ?? 0}.`);
       if (f.type === 'percent') s = s.max(100, `"${f.label}": máximo 100%.`);
       if (f.max !== undefined) s = s.max(f.max);
       return pre(toNumber, req(s, reqMsg));
     }
     case 'int': {
-      let s = z.number({ invalid_type_error: `"${f.label}" deve ser um número inteiro.`, required_error: reqMsg }).int(`"${f.label}" deve ser inteiro.`);
+      let s = z.number({ error: `"${f.label}" deve ser um número inteiro.` }).int(`"${f.label}" deve ser inteiro.`);
       if (f.min !== undefined) s = s.min(f.min, `"${f.label}": valor mínimo ${f.min}.`);
       if (f.max !== undefined) s = s.max(f.max, `"${f.label}": valor máximo ${f.max}.`);
       return pre(toNumber, req(s, reqMsg));

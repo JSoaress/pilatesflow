@@ -6,11 +6,11 @@ import { localToISO, todayISO } from '@/lib/format';
 import { getPaymentProvider } from '@/lib/integrations/payments';
 
 const METHODS = ['pix', 'cash', 'credit_card', 'debit_card', 'boleto', 'transfer', 'other'] as const;
-const num = (label: string) => z.preprocess((v) => (typeof v === 'string' ? Number(v.replace(/\./g, '').replace(',', '.')) : v), z.number({ invalid_type_error: `Informe ${label}.` }).positive(`Informe ${label}.`).max(10_000_000));
+const num = (label: string) => z.preprocess((v) => (typeof v === 'string' ? Number(v.replace(/\./g, '').replace(',', '.')) : v), z.number({ error: `Informe ${label}.` }).positive(`Informe ${label}.`).max(10_000_000));
 
 const subSchema = z.object({
   patient_id: z.string().uuid(),
-  plan_id: z.string({ required_error: 'Selecione o plano.' }).uuid('Selecione o plano.'),
+  plan_id: z.string({ error: 'Selecione o plano.' }).uuid('Selecione o plano.'),
   start_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Informe a data de início.'),
   custom_price: z.preprocess((v) => (v === '' || v === null || v === undefined ? null : Number(String(v).replace(',', '.'))), z.number().min(0).nullable()),
   discount_percent: z.preprocess((v) => (v === '' || v === null || v === undefined ? null : Number(String(v).replace(',', '.'))), z.number().min(0).max(100).nullable()),
@@ -48,7 +48,7 @@ export async function changeSubscriptionStatus(id: string, status: 'active' | 'p
 const paySchema = z.object({
   receivable_id: z.string().uuid(),
   amount: num('o valor recebido'),
-  method: z.enum(METHODS, { errorMap: () => ({ message: 'Selecione a forma de pagamento.' }) }),
+  method: z.enum(METHODS, { error: 'Selecione a forma de pagamento.' }),
   paid_on: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Informe a data do pagamento.'),
   cash_account_id: z.preprocess((v) => (v === '' ? null : v), z.string().uuid().nullable().optional()),
   notes: z.string().max(500).optional().nullable(),

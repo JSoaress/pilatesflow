@@ -65,7 +65,7 @@ export async function saveEvaluationForm(id: string | null, input: z.input<typeo
 
 // ---------------------------------------------------------------- modelos personalizados
 const optSchema = z.object({ value: z.string().min(1).max(60), label: z.string().min(1).max(200), score: z.number().optional() });
-const cellSchema = z.object({ type: z.enum(['number', 'text', 'single', 'date']), options: z.array(optSchema).max(40).optional(), unit: z.string().max(20).optional() });
+const cellSchema = z.object({ type: z.enum(['number', 'text', 'single', 'multi', 'date']), options: z.array(optSchema).max(40).optional(), unit: z.string().max(20).optional() });
 const fieldSchema = z.object({
   id: z.string().regex(/^[a-z0-9_]{1,40}$/, 'Identificador inválido.'),
   label: z.string().trim().min(1, 'Toda pergunta precisa de um texto.').max(300),

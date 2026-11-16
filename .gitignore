@@ -15,3 +15,5 @@ supabase/.temp
 *.tgz
 *.tar.gz
 !.env.docker.example
+
+package-lock.json

@@ -32,7 +32,7 @@ export function UploadAttachmentButton({ patientId, allowClinical }: { patientId
           router.refresh();
         }}>
           <Field label="Arquivo" htmlFor="att-file" required><Input id="att-file" name="file" type="file" accept="application/pdf,image/jpeg,image/png,image/webp" required /></Field>
-          <Field label="Categoria" htmlFor="att-cat"><Select id="att-cat" name="category" defaultValue="document">{Object.entries(attachmentCategory).filter(([k]) => k !== 'exam' && k !== 'medical_report' && (allowClinical || !clinical.includes(k))).map(([k, l]) => <option key={k} value={k}>{l}</option>)}</Select></Field>
+          <Field label="Categoria" htmlFor="att-cat"><Select id="att-cat" name="category" defaultValue="exam">{Object.entries(attachmentCategory).filter(([k]) => allowClinical || !clinical.includes(k)).map(([k, l]) => <option key={k} value={k}>{l}</option>)}</Select></Field>
           <Field label="Título" htmlFor="att-title"><Input id="att-title" name="title" placeholder="Ex.: Ressonância lombar 2025" /></Field>
           <Field label="Descrição" htmlFor="att-desc"><Textarea id="att-desc" name="description" rows={2} /></Field>
           <Button type="submit" loading={pending}>Enviar</Button>
@@ -79,7 +79,7 @@ export function DocumentActions({ id, status, canEdit }: { id: string; status: s
     <Menu trigger={(p) => <Button variant="ghost" size="icon-sm" aria-label="Ações do documento" {...p}><MoreHorizontal /></Button>}>
       {(close) => (
         <>
-          <MenuLink href={`/api/documents/${id}/pdf`} onClick={close}><FileDown /> Baixar PDF</MenuLink>
+          <MenuLink href={`/imprimir/documento/${id}`} onClick={close}><FileDown /> Baixar PDF</MenuLink>
           {canEdit && status === 'draft' && <MenuItem onClick={async () => { close(); const r = await setDocumentStatus(id, 'sent'); if (r.ok) { toast.success('Enviado ao portal do aluno para assinatura.'); router.refresh(); } else toast.error(r.error); }}><Send /> Enviar ao aluno</MenuItem>}
           {canEdit && status !== 'archived' && <MenuItem onClick={async () => { close(); const r = await setDocumentStatus(id, 'archived'); if (r.ok) router.refresh(); else toast.error(r.error); }}><Archive /> Arquivar</MenuItem>}
         </>

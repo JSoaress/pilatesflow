@@ -42,7 +42,7 @@ export default async function DocumentsPage({ searchParams }: { searchParams: Pr
                 <Td>{label(documentType, d.type)}</Td>
                 <Td><Badge variant={d.status === 'signed' ? 'success' : d.status === 'sent' ? 'info' : 'neutral'}>{label(documentStatus, d.status)}</Badge>{d.signed_at && <span className="ml-1 text-xs text-muted-foreground">{date(d.signed_at, ctx.tz)}</span>}</Td>
                 <Td>{date(d.created_at, ctx.tz)}</Td>
-                <Td><a href={`/api/documents/${d.id}/pdf`} target="_blank" rel="noopener" className="inline-flex items-center gap-1 text-sm text-primary hover:underline"><Printer className="h-4 w-4" />PDF</a></Td>
+                <Td><a href={`/imprimir/documento/${d.id}`} target="_blank" rel="noopener" className="inline-flex items-center gap-1 text-sm text-primary hover:underline"><Printer className="h-4 w-4" />PDF</a></Td>
               </Tr>
             ))}</tbody>
           </Table>

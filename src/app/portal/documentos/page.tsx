@@ -31,7 +31,7 @@ export default async function PortalDocuments() {
               </div>
               <details className="mt-2"><summary className="cursor-pointer text-sm text-primary">Ler contrato</summary><pre className="mt-2 max-h-96 overflow-y-auto whitespace-pre-wrap rounded-lg bg-muted p-3 font-sans text-sm">{c.content}</pre></details>
               <div className="mt-3 flex flex-wrap gap-2">
-                <a href={`/api/contracts/${c.id}/pdf`} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline">Baixar PDF</a>
+                <a href={`/imprimir/contrato/${c.id}`} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline">Baixar PDF</a>
                 {c.status === 'sent' && <AcceptDocument kind="contract" id={c.id} />}
               </div>
             </li>
@@ -48,7 +48,7 @@ export default async function PortalDocuments() {
               </div>
               <details className="mt-2"><summary className="cursor-pointer text-sm text-primary">Ler documento</summary><pre className="mt-2 max-h-96 overflow-y-auto whitespace-pre-wrap rounded-lg bg-muted p-3 font-sans text-sm">{x.content}</pre></details>
               <div className="mt-3 flex flex-wrap gap-2">
-                <a href={`/api/documents/${x.id}/pdf`} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline">Baixar PDF</a>
+                <a href={`/imprimir/documento/${x.id}`} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline">Baixar PDF</a>
                 {x.status === 'sent' && x.requires_signature && <AcceptDocument kind="document" id={x.id} />}
               </div>
             </li>

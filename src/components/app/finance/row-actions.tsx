@@ -19,7 +19,7 @@ export function PaymentRowActions({ paymentId, status, canRefund }: { paymentId:
     <Menu trigger={(p) => <Button variant="ghost" size="icon-sm" aria-label="Ações do pagamento" {...p}><MoreHorizontal /></Button>}>
       {(close) => (
         <>
-          <MenuLink href={`/api/receipts/${paymentId}`} onClick={close}><Receipt /> Recibo (PDF)</MenuLink>
+          <MenuLink href={`/imprimir/recibo/${paymentId}`} onClick={close}><Receipt /> Recibo (PDF)</MenuLink>
           {canRefund && status === 'confirmed' && (
             <MenuItem destructive onClick={async () => {
               close();
@@ -81,7 +81,7 @@ export function ContractRowActions({ id, status, canEdit }: { id: string; status
     <Menu trigger={(p) => <Button variant="ghost" size="icon-sm" aria-label="Ações do contrato" {...p}><MoreHorizontal /></Button>}>
       {(close) => (
         <>
-          <MenuLink href={`/api/contracts/${id}/pdf`} onClick={close}><FileDown /> Baixar PDF</MenuLink>
+          <MenuLink href={`/imprimir/contrato/${id}`} onClick={close}><FileDown /> Baixar PDF</MenuLink>
           {canEdit && status === 'draft' && <MenuItem onClick={async () => { close(); done(await setContractStatus(id, 'sent'), 'Contrato enviado ao portal do aluno para aceite.', router); }}><Send /> Enviar para aceite</MenuItem>}
           {canEdit && ['draft', 'sent'].includes(status) && <MenuItem destructive onClick={async () => { close(); done(await setContractStatus(id, 'cancelled'), 'Contrato cancelado.', router); }}><Ban /> Cancelar</MenuItem>}
         </>

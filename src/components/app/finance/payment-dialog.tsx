@@ -23,7 +23,7 @@ export function PaymentButton({ receivable, accounts, size = 'sm', label = 'Rece
     const r = await registerPayment({ receivable_id: receivable.id, amount: v.amount.replace(',', '.'), method: v.method as any, paid_on: v.paid_on, cash_account_id: v.cash_account_id || null, notes: v.notes || null });
     setPending(false);
     if (!r.ok) { toast.error(r.error); return; }
-    toast.success('Pagamento registrado.', { action: { label: 'Ver recibo', onClick: () => window.open(`/api/receipts/${r.data?.paymentId}`, '_blank') } });
+    toast.success('Pagamento registrado.', { action: { label: 'Ver recibo', onClick: () => window.open(`/imprimir/recibo/${r.data?.paymentId}`, '_blank') } });
     setOpen(false);
     router.refresh();
   };

@@ -44,7 +44,7 @@ export default async function PortalFinance() {
           <ul className="divide-y">{(f.payments as any[]).map((p) => (
             <li key={p.id} className="flex flex-wrap items-center justify-between gap-2 py-3 text-sm">
               <span>{dateTime(p.paid_at)} · {money(p.amount)} · {label(paymentMethod, p.method)}{p.status === 'refunded' && ' · estornado'}</span>
-              {p.status === 'confirmed' && <a className="text-primary hover:underline" href={`/api/receipts/${p.id}`} target="_blank" rel="noopener noreferrer">Recibo nº {p.receipt_number} (PDF)</a>}
+              {p.status === 'confirmed' && <a className="text-primary hover:underline" href={`/imprimir/recibo/${p.id}`} target="_blank" rel="noopener noreferrer">Recibo nº {p.receipt_number} (PDF)</a>}
             </li>
           ))}</ul>
         )}

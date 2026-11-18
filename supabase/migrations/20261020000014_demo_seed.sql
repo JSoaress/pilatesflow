@@ -196,16 +196,16 @@ begin
   -- Horários fixos (gera a agenda das próximas semanas)
   v_rec := public.create_fixed_schedule(jsonb_build_object('unit_id', v_unit, 'service_id', sv_aparelhos, 'staff_id', st_carlos,
     'room_id', r_aparelhos, 'weekdays', jsonb_build_array(1, 3), 'start_time', '07:00', 'capacity', 3, 'name', 'Aparelhos manhã',
-    'starts_on', v_today - 21, 'patient_ids', jsonb_build_array(v_patients[1], v_patients[2], v_patients[3])));
+    'starts_on', v_today - 21, 'override', true, 'patient_ids', jsonb_build_array(v_patients[1], v_patients[2], v_patients[3])));
   v_rec := public.create_fixed_schedule(jsonb_build_object('unit_id', v_unit, 'service_id', sv_aparelhos, 'staff_id', st_carlos,
     'room_id', r_aparelhos, 'weekdays', jsonb_build_array(2, 4), 'start_time', '18:00', 'capacity', 3, 'name', 'Aparelhos noite',
-    'starts_on', v_today - 21, 'patient_ids', jsonb_build_array(v_patients[4], v_patients[6], v_patients[7])));
+    'starts_on', v_today - 21, 'override', true, 'patient_ids', jsonb_build_array(v_patients[4], v_patients[6], v_patients[7])));
   v_rec := public.create_fixed_schedule(jsonb_build_object('unit_id', v_unit, 'service_id', sv_aparelhos, 'staff_id', st_mariana,
     'room_id', r_aparelhos, 'weekdays', jsonb_build_array(1, 3, 5), 'start_time', '17:00', 'capacity', 3, 'name', 'Pilates clínico',
-    'starts_on', v_today - 21, 'patient_ids', jsonb_build_array(v_patients[5], v_patients[10], v_patients[6])));
+    'starts_on', v_today - 21, 'override', true, 'patient_ids', jsonb_build_array(v_patients[5], v_patients[10], v_patients[6])));
   v_rec := public.create_fixed_schedule(jsonb_build_object('unit_id', v_unit, 'service_id', sv_solo, 'staff_id', st_carlos,
     'room_id', r_solo, 'weekdays', jsonb_build_array(5), 'start_time', '09:00', 'capacity', 8, 'name', 'Mat Pilates sexta',
-    'starts_on', v_today - 21, 'patient_ids', jsonb_build_array(v_patients[8], v_patients[9], v_patients[11], v_patients[12], v_patients[1])));
+    'starts_on', v_today - 21, 'override', true, 'patient_ids', jsonb_build_array(v_patients[8], v_patients[9], v_patients[11], v_patients[12], v_patients[1])));
 
   -- Histórico das últimas 3 semanas (aulas passadas com presença/falta)
   for v_rec_row in select * from recurrences where organization_id = v_org loop

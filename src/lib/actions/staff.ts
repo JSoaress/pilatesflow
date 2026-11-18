@@ -58,15 +58,26 @@ export async function inviteMember(input: z.input<typeof inviteSchema>) {
       userId = inv.data.user?.id ?? null;
     }
     if (!userId) throw new UserError('Não foi possível criar o usuário.');
-    // vínculo feito com a sessão do usuário que convidou (RLS + gatilhos de proteção do proprietário)
-    const { data: member, error } = await ctx.supabase.from('organization_members')
-      .upsert({ organization_id: ctx.org.id, user_id: userId, role_id: d.role_id, status: 'active', all_units: d.unit_ids.length === 0, created_by: ctx.user.id }, { onConflict: 'organization_id,user_id' })
-      .select('id').single();
-    if (error) throw error;
-    must(await ctx.supabase.from('member_units').delete().eq('member_id', member.id));
-    if (d.unit_ids.length) must(await ctx.supabase.from('member_units').insert(d.unit_ids.map((unit_id) => ({ member_id: member.id, unit_id }))));
+    // vínculo feito com a sessão do usuário que convidou (RLS + gatilhos de proteção do proprietário).
+    // UPDATE em organization_members é liberado apenas nas colunas (role_id, status, all_units),
+    // então não usamos upsert: inserimos quando novo e atualizamos só as colunas permitidas quando já existe.
+    const { data: existingMember } = await ctx.supabase.from('organization_members')
+      .select('id').eq('organization_id', ctx.org.id).eq('user_id', userId).maybeSingle();
+    let memberId: string;
+    if (existingMember) {
+      memberId = (existingMember as { id: string }).id;
+      must(await ctx.supabase.from('organization_members')
+        .update({ role_id: d.role_id, status: 'active', all_units: d.unit_ids.length === 0 })
+        .eq('id', memberId).eq('organization_id', ctx.org.id));
+    } else {
+      memberId = (must(await ctx.supabase.from('organization_members')
+        .insert({ organization_id: ctx.org.id, user_id: userId, role_id: d.role_id, status: 'active', all_units: d.unit_ids.length === 0, created_by: ctx.user.id })
+        .select('id').single()) as { id: string }).id;
+    }
+    must(await ctx.supabase.from('member_units').delete().eq('member_id', memberId));
+    if (d.unit_ids.length) must(await ctx.supabase.from('member_units').insert(d.unit_ids.map((unit_id) => ({ member_id: memberId, unit_id }))));
     if (d.staff_id) must(await ctx.supabase.from('staff').update({ user_id: userId }).eq('id', d.staff_id).eq('organization_id', ctx.org.id));
-    await ctx.supabase.rpc('log_audit_event', { p_org: ctx.org.id, p_action: 'invite', p_entity: 'organization_members', p_entity_id: member.id, p_context: { email: d.email } });
+    await ctx.supabase.rpc('log_audit_event', { p_org: ctx.org.id, p_action: 'invite', p_entity: 'organization_members', p_entity_id: memberId, p_context: { email: d.email } });
     revalidatePath('/app/configuracoes/usuarios');
     return { message: existing ? 'Usuário existente vinculado à clínica.' : `Convite enviado para ${d.email}.` };
   });

@@ -1,6 +1,7 @@
 'use server';
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
+import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
@@ -8,6 +9,7 @@ import { env, serverEnv } from '@/lib/env';
 import { friendlyError } from '@/lib/errors';
 import { password } from '@/lib/validation/common';
 import { captureException } from '@/lib/observability';
+import { postLoginPath } from '@/lib/auth/destination';
 
 type Res = { ok: boolean; error?: string; message?: string };
 
@@ -41,8 +43,13 @@ export async function loginAction(input: { email: string; password: string; next
   const supabase = await createClient();
   const { error } = await supabase.auth.signInWithPassword(parsed.data);
   if (error) return { ok: false, error: friendlyError(error) };
-  const next = input.next && input.next.startsWith('/') && !input.next.startsWith('//') ? input.next : '/entrar';
-  redirect(next);
+  // Destino resolvido aqui (sem passar pelo route handler /entrar), para que a server action
+  // redirecione direto para a página final — o pulo por um route handler não é seguido de forma
+  // confiável na navegação "soft" e obrigava um refresh manual.
+  const validNext = input.next && input.next.startsWith('/') && !input.next.startsWith('//') ? input.next : null;
+  const dest = validNext ?? (await postLoginPath(supabase));
+  revalidatePath('/', 'layout');
+  redirect(dest);
 }
 
 const signupSchema = z.object({

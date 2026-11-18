@@ -1,5 +1,22 @@
 import 'server-only';
+import nodemailer from 'nodemailer';
 import { serverEnv } from '@/lib/env';
+
+let cachedTransport: ReturnType<typeof nodemailer.createTransport> | null = null;
+function emailTransport() {
+  const e = serverEnv();
+  if (!cachedTransport) {
+    cachedTransport = nodemailer.createTransport({
+      host: e.email.smtpHost,
+      port: e.email.smtpPort,
+      secure: e.email.smtpPort === 465,
+      auth: { user: e.email.smtpUser, pass: e.email.smtpPass },
+      connectionTimeout: 15000,
+      socketTimeout: 15000,
+    });
+  }
+  return cachedTransport;
+}
 
 /**
  * Envio de mensagens pelos canais oficiais. WhatsApp: somente API oficial (Meta Cloud API).
@@ -11,7 +28,7 @@ export type OutMessage = { channel: 'whatsapp' | 'email' | 'sms' | 'push'; to: s
 export function channelConfigured(channel: OutMessage['channel']) {
   const e = serverEnv();
   if (channel === 'whatsapp') return !!(e.whatsapp.token && e.whatsapp.phoneNumberId);
-  if (channel === 'email') return !!(e.email.resendApiKey && e.email.from);
+  if (channel === 'email') return !!(e.email.smtpHost && e.email.smtpUser && e.email.smtpPass && e.email.from);
   if (channel === 'sms') return !!(e.sms.twilioSid && e.sms.twilioToken && e.sms.twilioFrom);
   return false;
 }
@@ -38,14 +55,11 @@ export async function sendMessage(msg: OutMessage): Promise<SendResult> {
       return { ok: true, provider: 'whatsapp_cloud', providerMessageId: j?.messages?.[0]?.id };
     }
     if (msg.channel === 'email') {
-      if (!channelConfigured('email')) return { ok: false, provider: 'resend', error: 'Integração de e-mail não configurada.' };
-      const res = await fetch('https://api.resend.com/emails', {
-        method: 'POST', headers: { Authorization: `Bearer ${e.email.resendApiKey}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ from: e.email.from, to: [msg.to], subject: msg.subject ?? 'Mensagem', text: msg.body }), signal: AbortSignal.timeout(15000),
+      if (!channelConfigured('email')) return { ok: false, provider: 'smtp', error: 'Integração de e-mail não configurada.' };
+      const info = await emailTransport().sendMail({
+        from: e.email.from, to: msg.to, subject: msg.subject ?? 'Mensagem', text: msg.body,
       });
-      const j = await res.json().catch(() => ({}));
-      if (!res.ok) return { ok: false, provider: 'resend', error: j?.message ?? `Erro ${res.status}` };
-      return { ok: true, provider: 'resend', providerMessageId: j?.id };
+      return { ok: true, provider: 'smtp', providerMessageId: info.messageId };
     }
     if (msg.channel === 'sms') {
       if (!channelConfigured('sms')) return { ok: false, provider: 'twilio', error: 'Integração de SMS não configurada.' };

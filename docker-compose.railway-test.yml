@@ -1,0 +1,132 @@
+# Simula o ambiente da Railway na sua máquina: um Postgres "comum" (não a
+# imagem supabase/postgres) + o container único do Dockerfile.railway.
+# Só para testar o build antes do deploy — não participa do dev normal
+# (docker-compose.yml) nem deve ir para produção.
+#
+# Uso:
+#   docker compose -f docker-compose.railway-test.yml up --build
+#   (Ctrl+C para parar; `down -v` para limpar o volume do banco de teste)
+#
+# Chaves abaixo são de teste, fixas e sem nenhum valor real — só para o
+# container conseguir subir e você bater nos endpoints.
+
+name: pilatesflow-railway-test
+
+services:
+  test-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_PASSWORD: test1234
+      POSTGRES_DB: railway
+    ports:
+      - "127.0.0.1:55432:5432"
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+      start_period: 5s
+
+  railway-app:
+    build:
+      context: .
+      dockerfile: Dockerfile.railway
+      args:
+        NEXT_PUBLIC_SUPABASE_URL: http://localhost:8080
+        NEXT_PUBLIC_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlzcyI6InBpbGF0ZXNmbG93IiwiaWF0IjoxNzk1NDM0MTIxLCJleHAiOjIxMTA3OTQxMjF9.gSZ3viGaER2zLDCyVo2EkSbONIMao7XZ7hhxUeLVMKM
+        NEXT_PUBLIC_SITE_URL: http://localhost:8080
+        NEXT_PUBLIC_DEFAULT_ORG_SLUG: studio-movimento
+        NEXT_PUBLIC_APP_NAME: PilatesFlow
+    depends_on:
+      test-db:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:8080:8080"
+    environment:
+      PORT: 8080
+      PGHOST: test-db
+      PGPORT: 5432
+      PGDATABASE: railway
+      POSTGRES_PASSWORD: test1234
+
+      JWT_SECRET: local-teste-railway-nao-usar-em-producao-32c
+      JWT_EXPIRY: 3600
+      ANON_KEY: &anon_key eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlzcyI6InBpbGF0ZXNmbG93IiwiaWF0IjoxNzk1NDM0MTIxLCJleHAiOjIxMTA3OTQxMjF9.gSZ3viGaER2zLDCyVo2EkSbONIMao7XZ7hhxUeLVMKM
+      SERVICE_ROLE_KEY: &service_key eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoic2VydmljZV9yb2xlIiwiaXNzIjoicGlsYXRlc2Zsb3ciLCJpYXQiOjE3OTU0MzQxMjEsImV4cCI6MjExMDc5NDEyMX0.6Icxg5e0Hdejpa7Gb4wIb9PhtC_tUxLHDO-A1EORQns
+
+      # --- GoTrue (auth) ---
+      GOTRUE_API_HOST: 0.0.0.0
+      GOTRUE_API_PORT: 9999
+      GOTRUE_DB_DRIVER: postgres
+      GOTRUE_DB_DATABASE_URL: postgres://supabase_auth_admin:test1234@test-db:5432/railway
+      API_EXTERNAL_URL: http://localhost:8080
+      GOTRUE_SITE_URL: http://localhost:8080
+      GOTRUE_URI_ALLOW_LIST: "http://localhost:8080/**"
+      GOTRUE_DISABLE_SIGNUP: "false"
+      GOTRUE_JWT_ADMIN_ROLES: service_role
+      GOTRUE_JWT_AUD: authenticated
+      GOTRUE_JWT_DEFAULT_GROUP_NAME: authenticated
+      GOTRUE_JWT_EXP: 3600
+      GOTRUE_JWT_SECRET: local-teste-railway-nao-usar-em-producao-32c
+      GOTRUE_EXTERNAL_EMAIL_ENABLED: "true"
+      GOTRUE_EXTERNAL_PHONE_ENABLED: "false"
+      # autoconfirm=true no teste local só para não depender de SMTP de verdade.
+      GOTRUE_MAILER_AUTOCONFIRM: "true"
+      GOTRUE_SMTP_ADMIN_EMAIL: teste@localhost
+      GOTRUE_SMTP_HOST: localhost
+      GOTRUE_SMTP_PORT: 587
+      GOTRUE_MAILER_URLPATHS_INVITE: /auth/v1/verify
+      GOTRUE_MAILER_URLPATHS_CONFIRMATION: /auth/v1/verify
+      GOTRUE_MAILER_URLPATHS_RECOVERY: /auth/v1/verify
+      GOTRUE_MAILER_URLPATHS_EMAIL_CHANGE: /auth/v1/verify
+
+      # --- PostgREST (rest) ---
+      PGRST_DB_URI: postgres://authenticator:test1234@test-db:5432/railway
+      PGRST_DB_SCHEMAS: public
+      PGRST_DB_ANON_ROLE: anon
+      PGRST_JWT_SECRET: local-teste-railway-nao-usar-em-producao-32c
+      PGRST_DB_USE_LEGACY_GUCS: "false"
+      PGRST_APP_SETTINGS_JWT_SECRET: local-teste-railway-nao-usar-em-producao-32c
+      PGRST_APP_SETTINGS_JWT_EXP: 3600
+
+      # --- Storage API ---
+      SERVICE_KEY: *service_key
+      DATABASE_URL: postgres://supabase_storage_admin:test1234@test-db:5432/railway
+      POSTGREST_URL: http://127.0.0.1:3000
+      FILE_SIZE_LIMIT: 52428800
+      STORAGE_BACKEND: file
+      FILE_STORAGE_BACKEND_PATH: /var/lib/storage
+      TENANT_ID: pilatesflow
+      REGION: local
+      GLOBAL_S3_BUCKET: pilatesflow
+      ENABLE_IMAGE_TRANSFORMATION: "false"
+
+      # --- App Next.js ---
+      NEXT_PUBLIC_SUPABASE_URL: http://localhost:8080
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: *anon_key
+      NEXT_PUBLIC_SITE_URL: http://localhost:8080
+      NEXT_PUBLIC_DEFAULT_ORG_SLUG: studio-movimento
+      NEXT_PUBLIC_APP_NAME: PilatesFlow
+      SUPABASE_SERVICE_ROLE_KEY: *service_key
+      ALLOW_PUBLIC_SIGNUP: "true"
+      CRON_SECRET: local-teste-cron-secret
+      TZ: America/Sao_Paulo
+    volumes:
+      - railway-test-storage:/var/lib/storage
+
+  seed:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    depends_on:
+      railway-app:
+        condition: service_healthy
+    command: ["npm", "run", "seed"]
+    environment:
+      NEXT_PUBLIC_SUPABASE_URL: http://railway-app:8080
+      SUPABASE_SERVICE_ROLE_KEY: *service_key
+      DEMO_PASSWORD: Demo@12345
+    profiles: ["seed"]
+
+volumes:
+  railway-test-storage:

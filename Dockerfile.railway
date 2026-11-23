@@ -1,0 +1,102 @@
+# syntax=docker/dockerfile:1
+# Imagem única: GoTrue (auth) + PostgREST (rest) + Storage API + nginx + app Next.js,
+# tudo num container só, para caber no limite de 3 serviços do plano Free da Railway
+# (Postgres da Railway + este container = 2 de 3).
+#
+# Experimental: os binários/apps vendorizados são copiados na íntegra das imagens
+# oficiais e localizados em tempo de execução (ver docker/entrypoint-railway.sh),
+# porque o caminho exato de cada um dentro da imagem original não pôde ser
+# confirmado sem um daemon Docker à disposição durante o desenvolvimento deste
+# arquivo. Pode precisar de um ajuste na primeira tentativa de build/deploy.
+
+# ---- Vendor: GoTrue (auth) ----
+FROM supabase/gotrue:v2.197.0 AS vendor-auth
+
+# ---- Vendor: PostgREST (rest) ----
+FROM postgrest/postgrest:v14.18 AS vendor-rest
+
+# ---- Vendor: Storage API ----
+FROM supabase/storage-api:v1.81.0 AS vendor-storage
+
+# ---- Next.js: deps ----
+FROM node:22-alpine AS deps
+WORKDIR /app
+RUN apk add --no-cache libc6-compat
+COPY package.json package-lock.json ./
+RUN npm ci --no-audit --no-fund
+
+# ---- Next.js: build ----
+FROM node:22-alpine AS build
+WORKDIR /app
+ARG NEXT_PUBLIC_SUPABASE_URL
+ARG NEXT_PUBLIC_SUPABASE_ANON_KEY
+ARG NEXT_PUBLIC_SITE_URL=http://localhost:3000
+ARG NEXT_PUBLIC_DEFAULT_ORG_SLUG=studio-movimento
+ARG NEXT_PUBLIC_APP_NAME=PilatesFlow
+ARG NEXT_PUBLIC_SUPPORT_WHATSAPP=
+ARG NEXT_PUBLIC_SUPPORT_EMAIL=
+ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL \
+    NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY \
+    NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL \
+    NEXT_PUBLIC_DEFAULT_ORG_SLUG=$NEXT_PUBLIC_DEFAULT_ORG_SLUG \
+    NEXT_PUBLIC_APP_NAME=$NEXT_PUBLIC_APP_NAME \
+    NEXT_PUBLIC_SUPPORT_WHATSAPP=$NEXT_PUBLIC_SUPPORT_WHATSAPP \
+    NEXT_PUBLIC_SUPPORT_EMAIL=$NEXT_PUBLIC_SUPPORT_EMAIL \
+    NEXT_OUTPUT=standalone \
+    NEXT_TELEMETRY_DISABLED=1
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+RUN npm run build
+
+# ---- Imagem final ----
+FROM node:22-alpine AS runner
+WORKDIR /app
+
+# bash: usado no entrypoint por causa do `wait -n` (não existe no ash/busybox).
+# nginx + gettext (envsubst): porta pública.
+# postgresql-client: psql, usado por 01-roles-and-jwt.sh e migrate.sh.
+RUN apk add --no-cache bash nginx postgresql-client gettext
+
+ENV NODE_ENV=production \
+    NEXT_TELEMETRY_DISABLED=1
+# PORT não é fixado aqui de propósito: é a porta pública, do nginx, injetada
+# pela Railway em tempo de execução. O app Next.js roda em 127.0.0.1:3001 —
+# essa porta é passada só pro processo dele no entrypoint (não como ENV
+# global), porque o Next.js standalone também lê $PORT, e se fosse global os
+# dois (nginx e app) tentariam escutar na mesma porta pública.
+
+# App Next.js (standalone) — roda em 127.0.0.1:3001, atrás do nginx.
+COPY --from=build /app/public ./public
+COPY --from=build /app/.next/standalone ./
+COPY --from=build /app/.next/static ./.next/static
+
+# Rootfs completos das imagens vendorizadas. É mais pesado do que copiar só o
+# binário, mas evita depender de um caminho interno exato: o entrypoint acha
+# o arquivo certo com `find` na hora de subir.
+COPY --from=vendor-auth / /vendor/auth/
+COPY --from=vendor-rest / /vendor/rest/
+COPY --from=vendor-storage / /vendor/storage/
+
+# Scripts do projeto que preparam o banco (mesmos usados no docker-compose local).
+COPY docker/lib.sh /docker/lib.sh
+COPY docker/db/init/01-roles-and-jwt.sh /docker/01-roles-and-jwt.sh
+COPY docker/migrate.sh /docker/migrate.sh
+COPY supabase/migrations /migrations
+
+# nginx: template processado pelo entrypoint (envsubst da porta pública).
+COPY docker/nginx/railway.conf.template /etc/nginx/templates/default.conf.template
+
+COPY docker/entrypoint-railway.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh /docker/01-roles-and-jwt.sh /docker/migrate.sh /docker/lib.sh
+
+# Observação: roda como root. Nos outros Dockerfiles do projeto o app roda com
+# usuário dedicado (nextjs); aqui, unir 4 processos de origens diferentes sob um
+# usuário não-root exigiria ajustar permissão de cada um separadamente, o que
+# não foi necessário para o objetivo imediato (caber no plano Free). Pode ser
+# revisitado depois.
+
+EXPOSE 8080
+HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=3 \
+  CMD wget -qO- "http://127.0.0.1:${PORT:-8080}/api/health" >/dev/null || exit 1
+
+ENTRYPOINT ["/entrypoint.sh"]

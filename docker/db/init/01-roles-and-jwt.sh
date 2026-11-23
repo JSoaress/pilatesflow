@@ -62,6 +62,19 @@ grant usage on schema storage to anon, authenticated, service_role;
 
 grant usage on schema public to anon, authenticated, service_role;
 
+-- 3.5 search_path padrão de cada role de serviço -------------------------
+-- A imagem supabase/postgres já vem com isso configurado; num Postgres
+-- genérico (ex.: Railway) precisamos fazer manualmente, senão GoTrue e
+-- Storage criam/leem tabelas sem qualificar o schema, caem em "public" e
+-- tomam "permission denied" (eles não têm CREATE em public, só no próprio
+-- schema que possuem).
+alter role supabase_auth_admin    set search_path to auth, extensions;
+alter role supabase_storage_admin set search_path to storage, extensions;
+alter role authenticator          set search_path to public, extensions;
+alter role anon                   set search_path to public, extensions;
+alter role authenticated          set search_path to public, extensions;
+alter role service_role           set search_path to public, extensions;
+
 -- 4. Funções da plataforma Supabase (não são do GoTrue) ------------------
 do $do$ begin
   if to_regprocedure('auth.uid()') is null then

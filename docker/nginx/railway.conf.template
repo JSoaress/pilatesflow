@@ -1,0 +1,53 @@
+# Gateway para o container único na Railway: todos os processos compartilham
+# a mesma rede (127.0.0.1), então não há nomes de serviço nem resolver do Docker
+# a configurar aqui — diferente do docker/nginx/default.conf.template (uso local).
+# ${PORT} é substituído pelo entrypoint (envsubst) com a porta pública da Railway.
+
+map $http_upgrade $connection_upgrade {
+  default upgrade;
+  ''      close;
+}
+
+server {
+  listen ${PORT};
+  server_name _;
+
+  client_max_body_size 50m;
+  proxy_http_version 1.1;
+  proxy_set_header Host              $http_host;
+  proxy_set_header X-Real-IP         $remote_addr;
+  proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+  proxy_set_header X-Forwarded-Proto $scheme;
+  proxy_set_header Upgrade           $http_upgrade;
+  proxy_set_header Connection        $connection_upgrade;
+  proxy_read_timeout 120s;
+
+  # GoTrue (prefixo removido)
+  location /auth/v1/ {
+    rewrite ^/auth/v1/(.*)$ /$1 break;
+    proxy_pass http://127.0.0.1:9999;
+  }
+
+  # PostgREST (prefixo removido)
+  location /rest/v1/ {
+    rewrite ^/rest/v1/(.*)$ /$1 break;
+    proxy_pass http://127.0.0.1:3000;
+  }
+
+  # Storage API (prefixo removido)
+  location /storage/v1/ {
+    rewrite ^/storage/v1/(.*)$ /$1 break;
+    proxy_pass http://127.0.0.1:5000;
+    proxy_request_buffering off;
+  }
+
+  # Realtime não é usado por este projeto
+  location /realtime/v1/ {
+    return 404;
+  }
+
+  # Todo o resto: aplicação Next.js
+  location / {
+    proxy_pass http://127.0.0.1:3001;
+  }
+}

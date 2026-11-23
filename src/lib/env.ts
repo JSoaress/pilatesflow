@@ -21,11 +21,24 @@ export function serverEnv() {
       appSecret: process.env.WHATSAPP_APP_SECRET ?? '',
     },
     email: {
+      // Brevo (API HTTP): preferido na Railway, que bloqueia as portas SMTP
+      // (587/465/25) nos planos Free/Trial/Hobby. Se BREVO_API_KEY estiver
+      // definida, ela tem prioridade sobre o SMTP abaixo.
+      brevoApiKey: process.env.BREVO_API_KEY ?? '',
       smtpHost: process.env.SMTP_HOST ?? '',
       smtpPort: Number(process.env.SMTP_PORT ?? '587'),
       smtpUser: process.env.SMTP_USER ?? '',
       smtpPass: process.env.SMTP_PASS ?? '',
       from: process.env.EMAIL_FROM ?? '',
+      fromName: process.env.EMAIL_FROM_NAME ?? '',
+    },
+    // Send Email Hook do GoTrue (self-hosted): delega o envio dos e-mails de
+    // auth (signup, recovery, invite, etc.) para /api/auth/email-hook via
+    // webhook assinado (Standard Webhooks). Necessário na Railway pelo mesmo
+    // motivo do Brevo acima — o SMTP interno do GoTrue não funciona lá.
+    // Formato: "v1,whsec_XXXX" (ou várias chaves separadas por "|" p/ rotação).
+    authEmailHook: {
+      secrets: process.env.GOTRUE_HOOK_SEND_EMAIL_SECRETS ?? '',
     },
     sms: {
       twilioSid: process.env.TWILIO_ACCOUNT_SID ?? '',

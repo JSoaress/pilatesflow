@@ -1,28 +1,43 @@
 # Deploy na Railway — container único (plano Free)
 
-> **Status:** experimental. Este arquivo descreve o deploy de `auth` (GoTrue) +
-> `rest` (PostgREST) + `storage` (Storage API) + `nginx` + o app Next.js
-> **num container só**, para caber no limite de 3 serviços/projeto do plano
-> Free da Railway (Postgres + este container = 2 de 3).
->
-> Não há daemon Docker disponível no ambiente onde este Dockerfile foi escrito,
-> então ele não pôde ser testado por build real antes do primeiro deploy.
-> É esperado precisar de 1-2 rodadas de ajuste olhando os logs reais da Railway.
-> Se preferir não lidar com esse risco agora, a alternativa é o plano Hobby
-> (US$5/mês), que remove o limite de serviços e permite manter `auth`, `rest`
-> e `storage` como serviços separados (mais simples e mais perto do
-> `docker-compose.yml` local).
+> **Status:** validado localmente (ver seção 0). `auth` (GoTrue) + `rest`
+> (PostgREST) + `storage` (Storage API) + `nginx` + o app Next.js rodam juntos
+> num container só, pra caber no limite de 3 serviços/projeto do plano Free
+> da Railway (Postgres + este container = 2 de 3). O build e o boot completo
+> (migrations, login, storage) já foram testados localmente contra um
+> Postgres genérico (não `supabase/postgres`), simulando a Railway. Ainda
+> assim, a primeira tentativa na Railway pode expor alguma diferença de
+> ambiente — se der erro, me manda o log.
 
-## 0. Arquivos novos deste modo de deploy
+## 0. Arquivos deste modo de deploy
 
 - `Dockerfile.railway` — imagem única (auth + rest + storage + nginx + app).
-- `docker/entrypoint-railway.sh` — processo que sobe os 5 processos e aplica
-  as migrations, na ordem certa.
+- `docker/entrypoint-railway.sh` — sobe os 5 processos na ordem certa e
+  aplica as migrations. Localiza os binários do auth/rest e o entrypoint do
+  storage dinamicamente (via `find`/candidatos reais no disco), e isola a
+  porta de cada processo (auth=9999, rest=3000, storage=5000, app=3001) do
+  `$PORT` público do nginx — o Storage API, sem esse isolamento, também
+  escuta em `$PORT` por padrão e briga com o nginx.
 - `docker/nginx/railway.conf.template` — nginx apontando para `127.0.0.1:<porta>`
   em vez dos nomes de serviço do Compose.
+- `docker-compose.railway-test.yml` — simula o ambiente da Railway na sua
+  máquina (Postgres genérico + o container único + serviço `seed`). **Use
+  isso antes de qualquer deploy real** se mudar algo nesses arquivos:
 
-Nenhum arquivo usado pelo `docker-compose.yml` local foi alterado — o ambiente
-de desenvolvimento local continua igual.
+  ```bash
+  docker compose -f docker-compose.railway-test.yml up --build
+  # noutro terminal, depois do stack no ar:
+  curl http://localhost:8080/auth/v1/health
+  curl http://localhost:8080/rest/v1/
+  curl -I http://localhost:8080/
+  # popular com dados de demonstração:
+  docker compose -f docker-compose.railway-test.yml --profile seed run --rm seed
+  ```
+
+  As chaves nesse arquivo são fixas e só de teste — não usar em produção.
+
+Nenhum arquivo usado pelo `docker-compose.yml` normal foi alterado — o
+ambiente de desenvolvimento local do dia a dia continua igual.
 
 ## 1. Banco de dados
 
@@ -30,12 +45,12 @@ de desenvolvimento local continua igual.
    deles, não a imagem `supabase/postgres`).
 2. Abra o serviço do Postgres → aba **Variables** e confirme o nome do banco
    (normalmente `railway`, não `postgres`) e veja as variáveis que ele expõe:
-   `POSTGRES_PASSWORD`, `PGHOST`/`RAILWAY_PRIVATE_DOMAIN`, `PGPORT` (5432),
-   `PGDATABASE`.
+   `POSTGRES_PASSWORD`, `RAILWAY_PRIVATE_DOMAIN`, `PGPORT` (5432).
 
-## 2. Gerar as chaves (se ainda não tiver)
+## 2. Gerar as chaves de produção
 
-No seu computador, dentro do projeto:
+No seu computador, dentro do projeto (gera um segredo novo, aleatório —
+não reaproveite o do `docker-compose.railway-test.yml`, que é só de teste):
 
 ```bash
 node docker/generate-keys.mjs
@@ -53,19 +68,19 @@ entrar nas variáveis do serviço abaixo.
 3. Em **Settings → Networking → Public Networking**, clique **Generate Domain**.
    Anote o domínio gerado (ex.: `pilatesflow.up.railway.app`) — ele entra em
    várias variáveis abaixo como `https://pilatesflow.up.railway.app`.
-4. Crie um **Volume** (`Cmd+K` → *Create Volume*, ou clique com o botão direito
+4. Crie um **Volume** (`Cmd+K` → _Create Volume_, ou clique com o botão direito
    no canvas do projeto) e anexe ao serviço do container único, com
    **Mount Path = `/var/lib/storage`** (é onde o Storage API guarda os arquivos).
 
 ### Variáveis de ambiente do serviço (Variables)
 
-Use referência de outro serviço na Railway com `${{NomeDoServiço.VARIAVEL}}`
+Use referência a outro serviço na Railway com `${{NomeDoServiço.VARIAVEL}}`
 (o nome exato do serviço do Postgres aparece no próprio painel). Troque
 `SEU-DOMINIO` pelo domínio gerado no passo 3, e `<gerado>` pelos valores do
 passo 2.
 
 ```dotenv
-# --- Conexão com o Postgres da Railway (referenciando o serviço do banco) ---
+# --- Conexão com o Postgres da Railway ---
 PGHOST=${{Postgres.RAILWAY_PRIVATE_DOMAIN}}
 PGPORT=5432
 PGDATABASE=railway
@@ -155,7 +170,7 @@ adicione as variáveis correspondentes do seu `.env.docker` (mesmos nomes:
 `NFSE_*`, `SENTRY_DSN`).
 
 > **Build args:** as variáveis `NEXT_PUBLIC_*` também precisam estar
-> disponíveis durante o *build* (ficam embutidas no bundle do navegador). A
+> disponíveis durante o _build_ (ficam embutidas no bundle do navegador). A
 > Railway encaminha automaticamente uma variável do serviço para um `ARG` do
 > Dockerfile com o mesmo nome — não precisa duplicar nada, só confirmar que
 > elas estão na lista de variáveis do serviço antes do primeiro deploy.
@@ -174,22 +189,36 @@ adicione as variáveis correspondentes do seu `.env.docker` (mesmos nomes:
    - `https://SEU-DOMINIO/auth/v1/health` → deve responder
    - `https://SEU-DOMINIO/rest/v1/` → deve responder (JSON do PostgREST)
    - `https://SEU-DOMINIO/` → a aplicação
+4. (Opcional) Popular com dados de demonstração — rode localmente, apontando
+   pro domínio da Railway:
+   ```bash
+   NEXT_PUBLIC_SUPABASE_URL=https://SEU-DOMINIO \
+   SUPABASE_SERVICE_ROLE_KEY=<SERVICE_ROLE_KEY de produção> \
+   DEMO_PASSWORD=<senha que você quiser> \
+   npm run seed
+   ```
 
 ## 5. Se der erro
 
-- **"binário do GoTrue/PostgREST não encontrado"**: o `find` não achou o
-  executável dentro da imagem vendorizada. O log imprime o conteúdo do
-  diretório (`find /vendor/... -maxdepth 3`) — me envie esse trecho do log
-  para eu ajustar o critério de busca no `entrypoint-railway.sh`.
+- **"binário do GoTrue/PostgREST não encontrado" ou "não encontrei um
+  arquivo de entrada real do Storage API"**: o `find`/teste de candidatos não
+  achou o executável dentro da imagem vendorizada. O log imprime o conteúdo
+  do diretório — me envie esse trecho do log para eu ajustar o critério de
+  busca no `entrypoint-railway.sh`.
 - **`migrate.sh` falhando com "relation auth.users does not exist"**: o
   GoTrue ainda não terminou de criar as tabelas dele quando a migration
   rodou. O entrypoint já espera `/auth/v1/health` e `/storage/v1/status`
   responderem antes de migrar, mas se o Postgres da Railway for mais lento,
   pode precisar aumentar o tempo de espera (`for _ in $(seq 1 60)` → mais
   tentativas) no `entrypoint-railway.sh`.
-- **nginx não sobe / porta errada**: confirme que a Railway está indicando a
-  mesma porta que `PORT` (o healthcheck e o domínio público usam a mesma
-  variável).
+- **nginx com "Address already in use" na porta pública**: já vimos isso no
+  teste local — era o Storage API também escutando em `$PORT` por padrão.
+  Já está corrigido no `entrypoint-railway.sh` (isola `PORT=5000` só pro
+  storage), mas se reaparecer, é sinal de que outro processo (auth ou rest)
+  está fazendo a mesma coisa — me manda o log.
+- **`permission denied for schema public`**: o role que conecta (auth,
+  storage, etc.) não tem `search_path` apontando pro schema certo. Já
+  corrigido no `docker/db/init/01-roles-and-jwt.sh` (seção "3.5").
 - Qualquer processo cair faz o container inteiro sair (propositalmente) —
   isso força a Railway a reiniciar tudo do zero, o que é mais seguro do que
   deixar um dos 5 processos travado silenciosamente no ar.
